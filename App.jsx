@@ -9,12 +9,17 @@ import History from "./screens/History";
 import Settings from "./screens/Settings";
 import {Image, Text, View} from "react-native";
 import icons from "./constants/icons";
-import Tracabilite from "./screens/tracabilite/Tracibilite";
+import Tracabilite from "./screens/tracabilite/Tracabilite";
 import Temperature from "./screens/temperature/Temperature";
 import Huile from "./screens/huile/Huile";
 import Reception from "./screens/reception/Reception";
 import Nettoyage from "./screens/nettoyage/Nettoyage";
 import TcProduit from "./screens/tcp/TcProduit";
+import TracabiliteSimple from "./screens/tracabilite/TracabiliteSimple";
+import TracabiliteFirst from "./screens/tracabilite/Détaillée/TracabiliteFirst";
+import DetailProduit from "./screens/tracabilite/Détaillée/DetailProduit";
+import ListePostes from "./screens/nettoyage/ListePostes";
+import NouvelleReception from "./screens/reception/NouvelleReception";
 
 const TabIcon = ({color, icon, name, focused}) => {
     return (
@@ -41,10 +46,15 @@ export default function App() {
             }}>
                 <Stack.Screen name="Tab" component={TabNavigator} options={{headerShown: false}}/>
                 <Stack.Screen name="Tracabilite" component={Tracabilite} options={{}}/>
+                <Stack.Screen name="Tracabilite Simple" component={TracabiliteSimple} options={{title: "Traçabilité simplifiée"}}/>
+                <Stack.Screen name="Tracabilite Détaillée" component={TracabiliteFirst} options={{title: "Traçabilité Détaillée"}}/>
+                <Stack.Screen name="Détail Produit" component={DetailProduit} options={{title: ""}}/>
                 <Stack.Screen name="Temperature" component={Temperature}/>
                 <Stack.Screen name="Huile" component={Huile}/>
                 <Stack.Screen name="Reception" component={Reception}/>
+                <Stack.Screen name="Nouvelle Reception" component={NouvelleReception} options={{title: "Réception planifiée"}}/>
                 <Stack.Screen name="Nettoyage" component={Nettoyage}/>
+                <Stack.Screen name="Liste Postes" component={ListePostes}/>
                 <Stack.Screen name="TcProduit" component={TcProduit}/>
             </Stack.Navigator>
         </NavigationContainer>
