@@ -20,6 +20,8 @@ import TracabiliteFirst from "./screens/tracabilite/Détaillée/TracabiliteFirst
 import DetailProduit from "./screens/tracabilite/Détaillée/DetailProduit";
 import ListePostes from "./screens/nettoyage/ListePostes";
 import NouvelleReception from "./screens/reception/NouvelleReception";
+import ReceptionProduit from "./screens/reception/ReceptionProduit";
+import ReceptionFinal from "./screens/reception/ReceptionFinal";
 
 const TabIcon = ({color, icon, name, focused}) => {
     return (
@@ -50,12 +52,14 @@ export default function App() {
                 <Stack.Screen name="Tracabilite Détaillée" component={TracabiliteFirst} options={{title: "Traçabilité Détaillée"}}/>
                 <Stack.Screen name="Détail Produit" component={DetailProduit} options={{title: ""}}/>
                 <Stack.Screen name="Temperature" component={Temperature}/>
-                <Stack.Screen name="Huile" component={Huile}/>
+                <Stack.Screen name="Huile" component={Huile} options={{title: "Contrôle d'huiles "}}/>
                 <Stack.Screen name="Reception" component={Reception}/>
                 <Stack.Screen name="Nouvelle Reception" component={NouvelleReception} options={{title: "Réception planifiée"}}/>
+                <Stack.Screen name="Reception Produit" component={ReceptionProduit} options={{title: "Réception planifiée"}}/>
+                <Stack.Screen name="Reception Final" component={ReceptionFinal} options={{title: "Réception planifiée"}}/>
                 <Stack.Screen name="Nettoyage" component={Nettoyage}/>
                 <Stack.Screen name="Liste Postes" component={ListePostes}/>
-                <Stack.Screen name="TcProduit" component={TcProduit}/>
+                <Stack.Screen name="TcProduit" component={TcProduit} options={{title: "T°C produit"}}/>
             </Stack.Navigator>
         </NavigationContainer>
     );

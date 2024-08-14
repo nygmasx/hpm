@@ -1,8 +1,12 @@
 import React from 'react';
 import {Image, Text, TouchableOpacity, View} from "react-native";
 import { Ionicons } from '@expo/vector-icons';
+import CreateStackNavigator from "@react-navigation/stack/src/navigators/createStackNavigator";
+import {NavigationContainer} from "@react-navigation/native";
 
-const ActionModal = ({route, title, icon, subtitle}) => {
+const Stack = CreateStackNavigator()
+
+const ActionModal = ({route, title, icon, subtitle, navigation}) => {
     return (
         <TouchableOpacity className="w-full h-40 items-center justify-center flex flex-col bg-[#008170] rounded-[16px]" onPress={() => navigation.navigate(`${route}`)}>
             <Ionicons name={icon} size={50} color="white" />
