@@ -22,6 +22,7 @@ import ListePostes from "./screens/nettoyage/ListePostes";
 import NouvelleReception from "./screens/reception/NouvelleReception";
 import ReceptionProduit from "./screens/reception/ReceptionProduit";
 import ReceptionFinal from "./screens/reception/ReceptionFinal";
+import TcpOperation from "./screens/tcp/TcpOperation";
 
 const TabIcon = ({color, icon, name, focused}) => {
     return (
@@ -60,6 +61,7 @@ export default function App() {
                 <Stack.Screen name="Nettoyage" component={Nettoyage}/>
                 <Stack.Screen name="Liste Postes" component={ListePostes}/>
                 <Stack.Screen name="TcProduit" component={TcProduit} options={{title: "T°C produit"}}/>
+                <Stack.Screen name="TcpOperation" component={TcpOperation} options={{title: "T°C - Produit"}}/>
             </Stack.Navigator>
         </NavigationContainer>
     );

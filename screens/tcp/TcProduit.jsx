@@ -23,13 +23,13 @@ const TcProduit = ({navigation}) => {
             <View className="w-full flex-1 px-4 my-6 h-full justify-between flex-col space-y-4">
                 <View style={{gap: "20"}}>
                     <View style={{gap: 10}}>
-                        <Text className="font-bold text-lg">Fournisseur</Text>
+                        <Text className="font-bold text-lg">Type d'opération</Text>
                         <SelectList
                             setSelected={(value) => console.log(value)}
                             data={data}
                             boxStyles={styles.select}
                             style
-                            placeholder="Choisir un fournisseur"
+                            placeholder="Refroidissement"
                         />
                     </View>
                     <Text className="font-bold text-lg">Produits réceptionnés</Text>
@@ -46,7 +46,7 @@ const TcProduit = ({navigation}) => {
                     </View>
                     <View className="mt-2">
                         <TouchableOpacity onPress={() => {
-                            navigation.navigate('Détail Produit')
+                            navigation.navigate('TcpOperation')
                         }}
                                           className="bg-secondary-200 w-full items-center justify-between rounded-2xl p-4 flex-row">
                             <View>
@@ -60,7 +60,7 @@ const TcProduit = ({navigation}) => {
                 </View>
             </View>
             <View className="absolute bottom-0 w-full px-4 my-12">
-                <CustomButton title="Valider la saisie" handlePress={() => navigation.navigate('Reception Final')}/>
+                <CustomButton title="Valider la saisie" handlePress={() => navigation.navigate('TcpOperation')}/>
             </View>
         </SafeAreaView>
     );
