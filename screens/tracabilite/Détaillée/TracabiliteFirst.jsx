@@ -1,5 +1,14 @@
-import React from 'react';
-import {Image, SafeAreaView, ScrollView, Text, TouchableHighlight, TouchableOpacity, View} from "react-native";
+import React, {useEffect, useState} from 'react';
+import {
+    FlatList,
+    Image,
+    SafeAreaView,
+    ScrollView,
+    Text,
+    TouchableHighlight,
+    TouchableOpacity,
+    View
+} from "react-native";
 import FormField from "../../../components/FormField";
 import DateTimeField from "../../../components/DateTimeField";
 import {FontAwesome, Ionicons} from "@expo/vector-icons";
@@ -7,11 +16,43 @@ import PictureModal from "../../../components/PictureModal";
 import CustomButton from "../../../components/CustomButton";
 import {Chip, Searchbar} from "react-native-paper";
 import {AntDesign} from '@expo/vector-icons';
-import backgrounds from "../../../constants/backgrounds";
+import axios, {Axios} from "axios";
 
 const TracabiliteFirst = ({navigation}) => {
+
+    const [data, setData] = useState([])
+
+    useEffect(() => {
+        getAllProducts()
+    }, []);
+
+    function getAllProducts() {
+        axios.get("https://apimobile.testingtest.fr/api/products")
+            .then(response => {
+                setData(response.data)
+            })
+            .catch(error => {
+                console.log(error)
+            })
+    }
+
+    const renderItem = ({item}) => (
+        <TouchableOpacity onPress={() => {
+            navigation.navigate('Détail Produit')
+        }}
+                          className="bg-secondary-200 w-full items-center justify-between rounded-2xl p-4 flex-row">
+            <View>
+                <Text className="font-bold text-lg">{item.name}</Text>
+                <Text className="text-[16px] text-[#71727A]">1kg</Text>
+            </View>
+            <View><AntDesign name="checkcircle" size={24} color="#008170"/></View>
+        </TouchableOpacity>
+    )
+
+    const gap = 10;
+
     return (
-        <SafeAreaView className="bg-white flex-1 h-full">
+        <View className="bg-white flex-1 h-full">
             <ScrollView style={{height: "100%"}}>
                 <View className="w-full flex-1 px-4 my-6 h-full justify-between flex-col space-y-4">
                     <DateTimeField title="Date d’ouverture du/des produit(s)"/>
@@ -37,25 +78,22 @@ const TracabiliteFirst = ({navigation}) => {
                                 <AntDesign name="plus" size={24} color="white"/>
                             </TouchableOpacity>
                         </View>
-                        <View className="mt-2">
-                            <TouchableOpacity onPress={() => {
-                                navigation.navigate('Détail Produit')
-                            }}
-                                              className="bg-secondary-200 w-full items-center justify-between rounded-2xl p-4 flex-row">
-                                <View>
-                                    <Text className="font-bold text-lg">Produit 1</Text>
-                                    <Text className="text-[16px] text-[#71727A]">1kg</Text>
-                                </View>
-                                <View><AntDesign name="checkcircle" size={24} color="#008170"/></View>
-                            </TouchableOpacity>
-                        </View>
+                        <FlatList
+                            data={data}
+                            renderItem={renderItem}
+                            keyExtractor={item => item.id}
+                            numColumns={2}
+                            contentContainerStyle={{gap}}
+                            columnWrapperStyle={{gap}}
+                            key={2}
+                        />
                     </View>
                 </View>
             </ScrollView>
             <View className="absolute bottom-0 w-full px-4 my-12">
                 <CustomButton title="Valider la saisie"/>
             </View>
-        </SafeAreaView>
+        </View>
     );
 };
 

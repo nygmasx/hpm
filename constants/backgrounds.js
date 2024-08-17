@@ -5,6 +5,8 @@ import nettoyage from '../assets/backgrounds/nettoyage.jpg'
 import huile from '../assets/backgrounds/huile.jpg'
 import tcp from '../assets/backgrounds/tcp.jpg'
 import scan from '../assets/backgrounds/scan.jpg'
+import home from '../assets/backgrounds/authhome.jpg'
+import cat from '../assets/backgrounds/cat.jpg'
 
 export default {
     tracabilite,
@@ -13,5 +15,7 @@ export default {
     nettoyage,
     huile,
     tcp,
-    scan
+    scan,
+    home,
+    cat
 }
