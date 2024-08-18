@@ -21,8 +21,8 @@ const LoginScreen = () => {
                 <View className="w-full px-6 mt-10">
                     <Text className="text-3xl font-extrabold">Vous avez un compte ?</Text>
                     <View className="space-y-4">
-                        <FormField placeholder="Email" value={email}/>
-                        <FormField placeholder="Mot de passe" value={password}/>
+                        <FormField placeholder="Email" value={email} handleChangeText={setEmail}/>
+                        <FormField placeholder="Mot de passe" value={password} handleChangeText={setPassword}/>
                         <TouchableOpacity>
                             <Text className="text-[16px] text-primary font-bold">Mot de passe oublié ?</Text>
                         </TouchableOpacity>

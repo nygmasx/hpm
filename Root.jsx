@@ -27,6 +27,7 @@ import AuthProvider, {AuthContext} from "./context/AuthProvider";
 import LoginScreen from "./screens/Auth/Login/LoginScreen";
 import RegisterScreen from "./screens/Auth/Register/RegisterScreen";
 import AuthHome from "./screens/Auth/AuthHome";
+import * as SecureStore from 'expo-secure-store';
 
 const TabIcon = ({color, icon, name, focused}) => {
     return (
@@ -44,13 +45,22 @@ const Tab = createBottomTabNavigator();
 export default function App() {
 
     const [isLoading, setIsLoading] = useState(true)
-    const {user} = useContext(AuthContext)
+    const {user, setUser} = useContext(AuthContext)
 
     useEffect(() => {
         // check si l'user est connecté ou pas
-        setTimeout(() => {
-            setIsLoading(false)
-        }, 2000)
+        SecureStore.getItemAsync('user')
+            .then(userString => {
+                if (userString) {
+                    setUser(JSON.parse(userString));
+                }
+                setIsLoading(false);
+            })
+            .catch(err => {
+                console.log(err);
+                setIsLoading(false);
+            });
+
     }, []);
 
     if (isLoading) {
