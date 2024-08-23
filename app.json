@@ -35,7 +35,17 @@
       "url": "https://u.expo.dev/85e6c78a-d86e-4da6-9e46-ccf268884607"
     },
     "plugins": [
-      "expo-secure-store"
+      [
+        "expo-secure-store"
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow $(PRODUCT_NAME) to access your photos.",
+          "savePhotosPermission": "Allow $(PRODUCT_NAME) to save photos.",
+          "isAccessMediaLocationEnabled": true
+        }
+      ]
     ]
   }
 }

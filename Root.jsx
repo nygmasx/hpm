@@ -162,7 +162,7 @@ const TabNavigator = () => {
             <Tab.Screen name="Paramètres" component={Settings} options={{
                 tabBarIcon: ({color, focused}) => (
                     <TabIcon icon={icons.settings} color={color} name="Paramètres"/>
-                )
+                ), headerShown: true
             }}/>
         </Tab.Navigator>
     )

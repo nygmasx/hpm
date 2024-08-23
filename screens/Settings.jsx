@@ -1,15 +1,31 @@
 import React, {useContext} from 'react';
-import {Button, View} from "react-native";
+import {Button, Image, SafeAreaView, ScrollView, Text, View} from "react-native";
 import {AuthContext} from "../context/AuthProvider";
+import icons from "../constants/icons";
 
 const Settings = () => {
 
-    const {logout} = useContext(AuthContext)
+    const {logout, user} = useContext(AuthContext)
+    const SECTIONS = [
+
+    ];
 
     return (
-        <View className="flex-1 justify-center items-center">
-            <Button title="Déconnexion" onPress={logout}/>
-        </View>
+        <SafeAreaView className="bg-white flex-1 h-full">
+            <ScrollView style={{height: "100%"}}>
+                <View className="w-full flex-1 px-4 my-6 h-full justify-between flex-col">
+                    <View className="w-full justify-center items-center">
+                        <View className="w-full items-center space-y-4">
+                            <Image source={icons.avatar} />
+                            <Text className="text-2xl font-bold">{user.name}</Text>
+                        </View>
+                    </View>
+                    <View>
+                        <Button title="Déconnexion" onPress={logout}/>
+                    </View>
+                </View>
+            </ScrollView>
+        </SafeAreaView>
     );
 };
 

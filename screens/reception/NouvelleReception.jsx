@@ -1,5 +1,14 @@
 import React from 'react';
-import {SafeAreaView, ScrollView, Text, TextInput, TouchableOpacity, View, StyleSheet} from "react-native";
+import {
+    SafeAreaView,
+    ScrollView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+    StyleSheet,
+    KeyboardAvoidingView
+} from "react-native";
 import FormField from "../../components/FormField";
 import DateTimeField from "../../components/DateTimeField";
 import {AntDesign, FontAwesome} from "@expo/vector-icons";
@@ -69,9 +78,11 @@ const NouvelleReception = ({navigation}) => {
                                   textStyle={{color: "#008170", textTransform: "uppercase"}}>Indifférent</Chip>
                         </View>
                     </View>
-                    <View>
-                        <FormField title="Informations complémentaires"/>
-                    </View>
+                    <KeyboardAvoidingView style={{flex: 1}} behavior={"position"} keyboardVerticalOffset={120}>
+                        <View>
+                            <FormField title="Informations complémentaires"/>
+                        </View>
+                    </KeyboardAvoidingView>
                 </View>
             </ScrollView>
             <View className="absolute bottom-0 w-full px-4 my-12">
