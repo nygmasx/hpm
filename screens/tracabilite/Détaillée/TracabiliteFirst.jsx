@@ -1,60 +1,91 @@
-import React, {useEffect, useState} from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 import {
-    FlatList,
-    Image,
     SafeAreaView,
     ScrollView,
     Text,
-    TouchableHighlight,
     TouchableOpacity,
     View
 } from "react-native";
-import FormField from "../../../components/FormField";
 import DateTimeField from "../../../components/DateTimeField";
-import {FontAwesome, Ionicons} from "@expo/vector-icons";
-import PictureModal from "../../../components/PictureModal";
-import CustomButton from "../../../components/CustomButton";
 import {Chip, Searchbar} from "react-native-paper";
 import {AntDesign} from '@expo/vector-icons';
-import axios, {Axios} from "axios";
+import axios from "axios";
+import CustomButton from "../../../components/CustomButton";
+import {AuthContext} from "../../../context/AuthProvider";
+import axiosConfig from "../../../helpers/axiosConfig";
+import FormField from "../../../components/FormField";
+import Modal from "react-native-modal";
 
 const TracabiliteFirst = ({navigation}) => {
 
-    const [data, setData] = useState([])
+    const [products, setProducts] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const {user} = useContext(AuthContext);
+    const [productName, setProductName] = useState('')
+    const [isModalVisible, setIsModalVisible] = useState(false)
 
-    useEffect(() => {
-        getAllProducts()
-    }, []);
-
-    function getAllProducts() {
-        axios.get("https://apimobile.testingtest.fr/api/products")
-            .then(response => {
-                setData(response.data)
-            })
-            .catch(error => {
-                console.log(error)
-            })
+    const toggleModal = () => {
+        setIsModalVisible(!isModalVisible)
     }
 
-    const renderItem = ({item}) => (
-        <TouchableOpacity onPress={() => {
-            navigation.navigate('Détail Produit')
-        }}
-                          className="bg-secondary-200 w-full items-center justify-between rounded-2xl p-4 flex-row">
-            <View>
-                <Text className="font-bold text-lg">{item.name}</Text>
-                <Text className="text-[16px] text-[#71727A]">1kg</Text>
-            </View>
-            <View><AntDesign name="checkcircle" size={24} color="#008170"/></View>
-        </TouchableOpacity>
-    )
+    useEffect(() => {
+        fetchUserProducts();
+    }, []);
 
-    const gap = 10;
+    const fetchUserProducts = async () => {
+        axiosConfig.get(`/user/${user.id}/products`, {})
+            .then(response => {
+                setProducts(response.data);
+            })
+            .catch(error => {
+                console.log(error);
+            });
+    }
+
+    const sendProductData = async () => {
+        setIsLoading(true)
+        const formData = new FormData();
+        formData.append('name', productName)
+
+        try {
+            axiosConfig.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
+            await axiosConfig.post('/product/new', formData);
+            setIsModalVisible(!isModalVisible)
+        } catch (error) {
+            console.error(error.response?.data || error.message);
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
 
     return (
-        <View className="bg-white flex-1 h-full">
+        <SafeAreaView className="bg-white flex-1 h-full">
+            <Modal isVisible={isModalVisible}>
+                <View className="p-6 space-y-8 bg-white items-center rounded-2xl justify-between">
+                    <View className="w-full" style={{gap: 20}}>
+                        <Text className="text-xl text-center font-extrabold">Ajouter un produit</Text>
+                        <View className="space-y-4">
+                            <FormField title="Nom de l'équipement" value={productName}/>
+                        </View>
+                    </View>
+                    <View className="flex-row space-x-2 items-end">
+                        <TouchableOpacity
+                            className="border-primary justify-center border-2 h-14 items-center w-1/2 rounded-2xl"
+                            onPress={toggleModal}
+                        >
+                            <Text className="text-primary text-[16px] font-semibold">Annuler</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity className="bg-primary justify-center items-center h-14 w-1/2 rounded-2xl"
+                        onPress={sendProductData}
+                        >
+                            <Text className="text-white text-[16px] font-semibold">Confirmer</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
             <ScrollView style={{height: "100%"}}>
-                <View className="w-full flex-1 px-4 my-6 h-full justify-between flex-col space-y-4">
+                <View className="w-full flex-1 px-4 my-6 justify-between flex-col space-y-4">
                     <DateTimeField title="Date d’ouverture du/des produit(s)"/>
                     <View className="space-y-4">
                         <Text className="font-bold text-lg">Durant quel service ?</Text>
@@ -69,31 +100,40 @@ const TracabiliteFirst = ({navigation}) => {
                                   textStyle={{color: "#008170", textTransform: "uppercase"}}>Indifférent</Chip>
                         </View>
                     </View>
-                    <View style={{gap: "20"}}>
+                    <View style={{gap: 20}}>
                         <Text className="font-bold text-lg">Produits</Text>
                         <View className="w-full items-center space-x-4 flex-row">
                             <Searchbar className="w-4/5 bg-secondary-100" placeholder="Rechercher un produit"/>
                             <TouchableOpacity
-                                className="rounded-full w-[45px] h-[45px] justify-center items-center bg-primary">
+                                className="rounded-full w-[45px] h-[45px] justify-center items-center bg-primary"
+                                onPress={toggleModal}
+                            >
                                 <AntDesign name="plus" size={24} color="white"/>
                             </TouchableOpacity>
                         </View>
-                        <FlatList
-                            data={data}
-                            renderItem={renderItem}
-                            keyExtractor={item => item.id}
-                            numColumns={2}
-                            contentContainerStyle={{gap}}
-                            columnWrapperStyle={{gap}}
-                            key={2}
-                        />
+                        <ScrollView style={{height: 400}} contentContainerStyle={{gap: 10}}>
+                            {products.map(product => (
+                                <TouchableOpacity
+                                    key={product.id}
+                                    onPress={() => {
+                                        navigation.navigate('Détail Produit', {productId: product.id})
+                                    }}
+                                    className="bg-secondary-200 w-full items-center justify-between rounded-2xl p-4 flex-row">
+                                    <View>
+                                        <Text className="font-bold text-lg">{product.name}</Text>
+                                        <Text>1kg</Text>
+                                    </View>
+                                    <View><AntDesign name="checkcircle" size={24} color="#008170"/></View>
+                                </TouchableOpacity>
+                            ))}
+                        </ScrollView>
+                        <View>
+                            <CustomButton title="Valider la saisie"/>
+                        </View>
                     </View>
                 </View>
             </ScrollView>
-            <View className="absolute bottom-0 w-full px-4 my-12">
-                <CustomButton title="Valider la saisie"/>
-            </View>
-        </View>
+        </SafeAreaView>
     );
 };
 
