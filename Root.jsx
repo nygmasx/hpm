@@ -28,6 +28,7 @@ import LoginScreen from "./screens/Auth/Login/LoginScreen";
 import RegisterScreen from "./screens/Auth/Register/RegisterScreen";
 import AuthHome from "./screens/Auth/AuthHome";
 import * as SecureStore from 'expo-secure-store';
+import Toast from "react-native-toast-message";
 
 const TabIcon = ({color, icon, name, focused}) => {
     return (
@@ -108,6 +109,7 @@ export default function App() {
                     <AuthStackNavigator/>
                 </NavigationContainer>
             )}
+            <Toast/>
         </>
 
     );

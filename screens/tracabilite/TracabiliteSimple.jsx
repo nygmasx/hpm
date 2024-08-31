@@ -9,12 +9,21 @@ import * as FileSystem from 'expo-file-system';
 import PictureModal from "../../components/PictureModal";
 import axiosConfig from "../../helpers/axiosConfig";
 import {AuthContext} from "../../context/AuthProvider";
+import Toast from "react-native-toast-message";
 
 const TracabiliteSimple = ({navigation}) => {
     const [images, setImages] = useState([]);
     const [openedAt, setOpenedAt] = useState(new Date());
     const [isLoading, setIsLoading] = useState(false);
     const {user} = useContext(AuthContext);
+
+    const showToast = () => {
+        Toast.show({
+            type: 'success',
+            text1: 'Traçabilité confirmé 🟢',
+            text2: 'This is some something 👋'
+        });
+    }
 
     const sendData = async () => {
         setIsLoading(true);
@@ -45,6 +54,7 @@ const TracabiliteSimple = ({navigation}) => {
                 },
             });
             navigation.navigate('Accueil');
+            showToast()
         } catch (error) {
             console.error(error.response?.data || error.message);
         } finally {

@@ -8,24 +8,34 @@ import {
 } from "react-native";
 import DateTimeField from "../../../components/DateTimeField";
 import {Chip, Searchbar} from "react-native-paper";
-import {AntDesign} from '@expo/vector-icons';
+import {AntDesign, FontAwesome6} from '@expo/vector-icons';
 import axios from "axios";
 import CustomButton from "../../../components/CustomButton";
 import {AuthContext} from "../../../context/AuthProvider";
 import axiosConfig from "../../../helpers/axiosConfig";
 import FormField from "../../../components/FormField";
 import Modal from "react-native-modal";
+import Toast from "react-native-toast-message";
+import {CheckBox} from "@rneui/base";
 
 const TracabiliteFirst = ({navigation}) => {
 
     const [products, setProducts] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const {user} = useContext(AuthContext);
-    const [productName, setProductName] = useState('')
+    const [productName, setProductName] = useState(productName)
     const [isModalVisible, setIsModalVisible] = useState(false)
 
     const toggleModal = () => {
         setIsModalVisible(!isModalVisible)
+    }
+
+    const showToast = () => {
+        Toast.show({
+            type: 'success',
+            text1: 'Traçabilité confirmé 🟢',
+            text2: 'This is some something 👋'
+        });
     }
 
     useEffect(() => {
@@ -50,7 +60,9 @@ const TracabiliteFirst = ({navigation}) => {
         try {
             axiosConfig.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
             await axiosConfig.post('/product/new', formData);
+            await fetchUserProducts()
             setIsModalVisible(!isModalVisible)
+            showToast()
         } catch (error) {
             console.error(error.response?.data || error.message);
         } finally {
@@ -66,7 +78,8 @@ const TracabiliteFirst = ({navigation}) => {
                     <View className="w-full" style={{gap: 20}}>
                         <Text className="text-xl text-center font-extrabold">Ajouter un produit</Text>
                         <View className="space-y-4">
-                            <FormField title="Nom de l'équipement" value={productName}/>
+                            <FormField title="Nom de l'équipement" value={productName}
+                                       handleChangeText={setProductName}/>
                         </View>
                     </View>
                     <View className="flex-row space-x-2 items-end">
@@ -77,7 +90,7 @@ const TracabiliteFirst = ({navigation}) => {
                             <Text className="text-primary text-[16px] font-semibold">Annuler</Text>
                         </TouchableOpacity>
                         <TouchableOpacity className="bg-primary justify-center items-center h-14 w-1/2 rounded-2xl"
-                        onPress={sendProductData}
+                                          onPress={sendProductData}
                         >
                             <Text className="text-white text-[16px] font-semibold">Confirmer</Text>
                         </TouchableOpacity>
@@ -123,7 +136,11 @@ const TracabiliteFirst = ({navigation}) => {
                                         <Text className="font-bold text-lg">{product.name}</Text>
                                         <Text>1kg</Text>
                                     </View>
-                                    <View><AntDesign name="checkcircle" size={24} color="#008170"/></View>
+                                    <View className="">
+                                        <CheckBox
+                                            checkedIcon={<AntDesign name="checkcircle" size={20} color="#008170"/>}
+                                            uncheckedIcon={<FontAwesome6 name="circle" size={20} color="#8F9098"/>}
+                                        /></View>
                                 </TouchableOpacity>
                             ))}
                         </ScrollView>
