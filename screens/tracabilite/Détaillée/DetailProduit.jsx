@@ -1,14 +1,22 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {SafeAreaView, Text, TouchableOpacity, View} from "react-native";
 import RNDateTimePicker from "@react-native-community/datetimepicker";
 import {FontAwesome, Ionicons} from "@expo/vector-icons";
 import CounterInput from "react-native-counter-input";
 import PictureModal from "../../../components/PictureModal";
 import CustomButton from "../../../components/CustomButton";
+import {useRoute} from "@react-navigation/native";
 
-const DetailProduit = () => {
+const DetailProduit = ({navigation}) => {
+    const [dlc, setDlc] = useState(new Date());
 
-    const [dlc, setDlc] = useState(new Date())
+    // Retrieve productName from route params
+    const route = useRoute();
+    const {productName} = route.params;
+
+    useEffect(() => {
+        navigation.setOptions({title: productName});
+    }, [navigation, productName]);
 
     return (
         <SafeAreaView className="bg-white flex-1 h-full">

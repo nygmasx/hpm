@@ -16,7 +16,7 @@ import axiosConfig from "../../../helpers/axiosConfig";
 import FormField from "../../../components/FormField";
 import Modal from "react-native-modal";
 import Toast from "react-native-toast-message";
-import {CheckBox} from "@rneui/base";
+import CheckBox from "expo-checkbox";
 
 const TracabiliteFirst = ({navigation}) => {
 
@@ -25,6 +25,7 @@ const TracabiliteFirst = ({navigation}) => {
     const {user} = useContext(AuthContext);
     const [productName, setProductName] = useState(productName)
     const [isModalVisible, setIsModalVisible] = useState(false)
+    const [checkedProducts, setCheckedProducts] = useState({});
 
     const toggleModal = () => {
         setIsModalVisible(!isModalVisible)
@@ -67,6 +68,18 @@ const TracabiliteFirst = ({navigation}) => {
             console.error(error.response?.data || error.message);
         } finally {
             setIsLoading(false);
+        }
+    }
+
+    const handleCheckboxChange = (productId, productName) => {
+        setCheckedProducts(prevState => ({
+            ...prevState,
+            [productId]: !prevState[productId]
+        }));
+
+        // Navigate if the checkbox is checked
+        if (!checkedProducts[productId]) {
+            navigation.navigate('Détail Produit', { productId, productName });
         }
     }
 
@@ -126,11 +139,9 @@ const TracabiliteFirst = ({navigation}) => {
                         </View>
                         <ScrollView style={{height: 400}} contentContainerStyle={{gap: 10}}>
                             {products.map(product => (
-                                <TouchableOpacity
+                                <View
                                     key={product.id}
-                                    onPress={() => {
-                                        navigation.navigate('Détail Produit', {productId: product.id})
-                                    }}
+
                                     className="bg-secondary-200 w-full items-center justify-between rounded-2xl p-4 flex-row">
                                     <View>
                                         <Text className="font-bold text-lg">{product.name}</Text>
@@ -138,10 +149,14 @@ const TracabiliteFirst = ({navigation}) => {
                                     </View>
                                     <View className="">
                                         <CheckBox
-                                            checkedIcon={<AntDesign name="checkcircle" size={20} color="#008170"/>}
-                                            uncheckedIcon={<FontAwesome6 name="circle" size={20} color="#8F9098"/>}
-                                        /></View>
-                                </TouchableOpacity>
+                                            disabled={false}
+                                            value={!!checkedProducts[product.id]}
+                                            onValueChange={() => handleCheckboxChange(product.id, product.name)}
+                                            color="#008170"
+                                            className="rounded-full w-[25px] h-[25px]"
+                                        />
+                                    </View>
+                                </View>
                             ))}
                         </ScrollView>
                         <View>
