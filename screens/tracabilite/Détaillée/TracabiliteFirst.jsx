@@ -1,5 +1,6 @@
 import React, {useContext, useEffect, useState} from 'react';
 import {
+    Alert,
     SafeAreaView,
     ScrollView,
     Text,
@@ -8,11 +9,10 @@ import {
 } from "react-native";
 import DateTimeField from "../../../components/DateTimeField";
 import {Chip, Searchbar} from "react-native-paper";
-import {AntDesign, FontAwesome6} from '@expo/vector-icons';
-import axios from "axios";
+import {AntDesign} from '@expo/vector-icons';
+import axiosConfig from "../../../helpers/axiosConfig";
 import CustomButton from "../../../components/CustomButton";
 import {AuthContext} from "../../../context/AuthProvider";
-import axiosConfig from "../../../helpers/axiosConfig";
 import FormField from "../../../components/FormField";
 import Modal from "react-native-modal";
 import Toast from "react-native-toast-message";
@@ -24,9 +24,11 @@ const TracabiliteFirst = ({navigation, route}) => {
     const [selectedProducts, setSelectedProducts] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const {user} = useContext(AuthContext);
-    const [productName, setProductName] = useState(productName)
-    const [isModalVisible, setIsModalVisible] = useState(false)
+    const [productName, setProductName] = useState('');
+    const [isModalVisible, setIsModalVisible] = useState(false);
     const [checkedProducts, setCheckedProducts] = useState({});
+    const [selectedService, setSelectedService] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const toggleModal = () => {
         setIsModalVisible(!isModalVisible)
@@ -75,17 +77,29 @@ const TracabiliteFirst = ({navigation, route}) => {
         }
     }
 
+    const handleChipClick = (service) => {
+        setSelectedService(service);
+    };
+
     const sendAllData = async () => {
+        if (selectedProducts.length === 0) {
+            Alert.alert(
+                "Aucun produit sélectionné",
+                "Veuillez sélectionner au moins un produit avant de soumettre.",
+                [{ text: "OK" }]
+            );
+            return;
+        }
+
         setIsLoading(true);
 
         try {
             // Create FormData object
             const formData = new FormData();
 
-            // Append basic fields to the FormData (user_id, opened_at, service)
             formData.append('user_id', user.id);
             formData.append('opened_at', new Date().toISOString().slice(0, 19).replace('T', ' '));
-            formData.append('service', 'Matin');  // Modify this based on actual service data
+            formData.append('service', selectedService);  // Modify this based on actual service data
 
             // Append each product's data as separate fields in the FormData
             selectedProducts.forEach((product, productIndex) => {
@@ -111,6 +125,7 @@ const TracabiliteFirst = ({navigation, route}) => {
             });
 
             console.log(response.data.message);
+            navigation.navigate('Accueil')
             showToast();
             setIsModalVisible(false);
         } catch (error) {
@@ -122,16 +137,45 @@ const TracabiliteFirst = ({navigation, route}) => {
 
 
     const handleCheckboxChange = (productId, productName) => {
-        setCheckedProducts(prevState => ({
-            ...prevState,
-            [productId]: !prevState[productId]
-        }));
+        setCheckedProducts(prevState => {
+            const newCheckedProducts = { ...prevState, [productId]: !prevState[productId] };
 
-        // Navigate if the checkbox is checked
-        if (!checkedProducts[productId]) {
-            navigation.navigate('Détail Produit', {productId, productName});
-        }
-    }
+            // Determine if the checkbox was checked or unchecked
+            const wasChecked = prevState[productId];
+            const isChecked = !wasChecked;
+
+            if (isChecked) {
+                // Navigate to product detail if checked
+                navigation.navigate('Détail Produit', { productId, productName });
+            } else {
+                // Uncheck case: Remove the product from selectedProducts
+                setSelectedProducts(prevProducts => {
+                    const updatedProducts = prevProducts.filter(product => product.productId !== productId);
+
+                    // Alert and log data when product is removed
+                    Alert.alert(
+                        "Produit retiré",
+                        `Le produit ${productName} a été retiré de la sélection.`,
+                        [{ text: "OK" }]
+                    );
+                    console.log('Updated Selected Products:', updatedProducts);
+
+                    return updatedProducts;
+                });
+            }
+
+            return newCheckedProducts;
+        });
+    };
+
+
+    const handleSearch = (query) => {
+        setSearchQuery(query);
+    };
+
+    const filteredProducts = products.filter(product =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
 
     return (
@@ -166,20 +210,53 @@ const TracabiliteFirst = ({navigation, route}) => {
                     <View className="space-y-4">
                         <Text className="font-bold text-lg">Durant quel service ?</Text>
                         <View className="flex-row" style={{gap: 10}}>
-                            <Chip className="rounded-2xl bg-[#EAF2FF]"
-                                  textStyle={{color: "#008170", textTransform: "uppercase"}}>Matin</Chip>
-                            <Chip className="rounded-2xl bg-[#EAF2FF]"
-                                  textStyle={{color: "#008170", textTransform: "uppercase"}}>Midi</Chip>
-                            <Chip className="rounded-2xl bg-[#EAF2FF]"
-                                  textStyle={{color: "#008170", textTransform: "uppercase"}}>Soir</Chip>
-                            <Chip className="rounded-2xl bg-[#EAF2FF]"
-                                  textStyle={{color: "#008170", textTransform: "uppercase"}}>Indifférent</Chip>
+                            <Chip
+                                className={`rounded-2xl ${selectedService === 'Matin' ? 'bg-[#008170] text-white' : 'bg-[#EAF2FF]'}`}
+                                textStyle={{
+                                    color: selectedService === 'Matin' ? 'white' : '#008170',
+                                    textTransform: "uppercase"
+                                }}
+                                onPress={() => handleChipClick('Matin')}
+                            >
+                                Matin
+                            </Chip>
+                            <Chip
+                                className={`rounded-2xl ${selectedService === 'Midi' ? 'bg-[#008170] text-white' : 'bg-[#EAF2FF]'}`}
+                                textStyle={{
+                                    color: selectedService === 'Midi' ? 'white' : '#008170',
+                                    textTransform: "uppercase"
+                                }}
+                                onPress={() => handleChipClick('Midi')}
+                            >
+                                Midi
+                            </Chip>
+                            <Chip
+                                className={`rounded-2xl ${selectedService === 'Soir' ? 'bg-[#008170] text-white' : 'bg-[#EAF2FF]'}`}
+                                textStyle={{
+                                    color: selectedService === 'Soir' ? 'white' : '#008170',
+                                    textTransform: "uppercase"
+                                }}
+                                onPress={() => handleChipClick('Soir')}
+                            >
+                                Soir
+                            </Chip>
+                            <Chip
+                                className={`rounded-2xl ${selectedService === 'Indifférent' ? 'bg-[#008170] text-white' : 'bg-[#EAF2FF]'}`}
+                                textStyle={{
+                                    color: selectedService === 'Indifférent' ? 'white' : '#008170',
+                                    textTransform: "uppercase"
+                                }}
+                                onPress={() => handleChipClick('Indifférent')}
+                            >
+                                Indifférent
+                            </Chip>
                         </View>
                     </View>
                     <View style={{gap: 20}}>
                         <Text className="font-bold text-lg">Produits</Text>
                         <View className="w-full items-center space-x-4 flex-row">
-                            <Searchbar className="w-4/5 bg-secondary-100" placeholder="Rechercher un produit"/>
+                            <Searchbar className="w-4/5 bg-secondary-100" placeholder="Rechercher un produit"
+                                       value={searchQuery} onChangeText={handleSearch}/>
                             <TouchableOpacity
                                 className="rounded-full w-[45px] h-[45px] justify-center items-center bg-primary"
                                 onPress={toggleModal}
@@ -187,19 +264,16 @@ const TracabiliteFirst = ({navigation, route}) => {
                                 <AntDesign name="plus" size={24} color="white"/>
                             </TouchableOpacity>
                         </View>
-                        <ScrollView style={{height: 400}} contentContainerStyle={{gap: 10}}>
-                            {products.map(product => (
-                                <View
-                                    key={product.id}
-
-                                    className="bg-secondary-200 w-full items-center justify-between rounded-2xl p-4 flex-row">
+                        <ScrollView style={{height: 300}} contentContainerStyle={{gap: 10}}>
+                            {filteredProducts.map(product => (
+                                <View key={product.id}
+                                      className="bg-secondary-200 w-full items-center justify-between rounded-2xl p-4 flex-row">
                                     <View>
                                         <Text className="font-bold text-lg">{product.name}</Text>
                                         <Text>1kg</Text>
                                     </View>
-                                    <View className="">
+                                    <View>
                                         <CheckBox
-                                            disabled={false}
                                             value={!!checkedProducts[product.id]}
                                             onValueChange={() => handleCheckboxChange(product.id, product.name)}
                                             color="#008170"

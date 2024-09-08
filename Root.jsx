@@ -29,6 +29,8 @@ import RegisterScreen from "./screens/Auth/Register/RegisterScreen";
 import AuthHome from "./screens/Auth/AuthHome";
 import * as SecureStore from 'expo-secure-store';
 import Toast from "react-native-toast-message";
+import HistoriqueTracabilite from "./screens/historique/Tracabilite/HistoriqueTracabilite";
+import HistoSimplifiee from "./screens/historique/Tracabilite/HistoSimplifiee";
 
 const TabIcon = ({color, icon, name, focused}) => {
     return (
@@ -102,6 +104,8 @@ export default function App() {
                         <Stack.Screen name="Liste Postes" component={ListePostes}/>
                         <Stack.Screen name="TcProduit" component={TcProduit} options={{title: "T°C produit"}}/>
                         <Stack.Screen name="TcpOperation" component={TcpOperation} options={{title: "T°C - Produit"}}/>
+                        <Stack.Screen name="Historique Tracabilite" component={HistoriqueTracabilite} options={{title: "Historique de traçabilité"}}/>
+                        <Stack.Screen name="Historique Tracabilite Simplifiée" component={HistoSimplifiee} options={{title: "Historique de traçabilité simplifiée"}}/>
                     </Stack.Navigator>
                 </NavigationContainer>
             ) : (
@@ -159,7 +163,7 @@ const TabNavigator = () => {
             <Tab.Screen name="Historique" component={History} options={{
                 tabBarIcon: ({color, focused}) => (
                     <TabIcon icon={icons.history} color={color} name="Historique"/>
-                )
+                ), headerShown: true
             }}/>
             <Tab.Screen name="Paramètres" component={Settings} options={{
                 tabBarIcon: ({color, focused}) => (

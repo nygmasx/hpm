@@ -43,7 +43,7 @@ const DetailProduit = ({navigation}) => {
     };
 
     const handleSubmit = async () => {
-        const productData = {
+        const productData    = {
             productId,
             productName,
             dlc: dlc.toISOString().replace('T', ' ').slice(0, 19),
@@ -71,6 +71,7 @@ const DetailProduit = ({navigation}) => {
                     min="0"
                     value={quantity}
                     onChange={(counter) => setQuantity(counter)}
+                    reverseCounterButtons
                 />
                 <Text className="font-bold text-lg">Photos de l'étiquette</Text>
                 <View className="items-end">
