@@ -18,9 +18,10 @@ import Modal from "react-native-modal";
 import Toast from "react-native-toast-message";
 import CheckBox from "expo-checkbox";
 
-const TracabiliteFirst = ({navigation}) => {
+const TracabiliteFirst = ({navigation, route}) => {
 
     const [products, setProducts] = useState([]);
+    const [selectedProducts, setSelectedProducts] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const {user} = useContext(AuthContext);
     const [productName, setProductName] = useState(productName)
@@ -40,8 +41,11 @@ const TracabiliteFirst = ({navigation}) => {
     }
 
     useEffect(() => {
+        if (route.params?.productData) {
+            setSelectedProducts(prev => [...prev, route.params.productData]);
+        }
         fetchUserProducts();
-    }, []);
+    }, [route.params]);
 
     const fetchUserProducts = async () => {
         axiosConfig.get(`/user/${user.id}/products`, {})
@@ -71,6 +75,52 @@ const TracabiliteFirst = ({navigation}) => {
         }
     }
 
+    const sendAllData = async () => {
+        setIsLoading(true);
+
+        try {
+            // Create FormData object
+            const formData = new FormData();
+
+            // Append basic fields to the FormData (user_id, opened_at, service)
+            formData.append('user_id', user.id);
+            formData.append('opened_at', new Date().toISOString().slice(0, 19).replace('T', ' '));
+            formData.append('service', 'Matin');  // Modify this based on actual service data
+
+            // Append each product's data as separate fields in the FormData
+            selectedProducts.forEach((product, productIndex) => {
+                formData.append(`products[${productIndex}][product_id]`, product.productId);
+                formData.append(`products[${productIndex}][expiration_date]`, product.dlc);
+                formData.append(`products[${productIndex}][quantity]`, product.quantity);
+
+                // Append each product's images
+                product.images.forEach((image, imageIndex) => {
+                    formData.append(`products[${productIndex}][label_pictures][${imageIndex}]`, {
+                        uri: image.uri,
+                        name: image.name,
+                        type: 'image/jpeg', // or adjust according to image type
+                    });
+                });
+            });
+            // Send the request with the FormData
+            axiosConfig.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
+            const response = await axiosConfig.post('/advanced-tracability/new', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                }
+            });
+
+            console.log(response.data.message);
+            showToast();
+            setIsModalVisible(false);
+        } catch (error) {
+            console.error(error.response?.data || error.message);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+
     const handleCheckboxChange = (productId, productName) => {
         setCheckedProducts(prevState => ({
             ...prevState,
@@ -79,7 +129,7 @@ const TracabiliteFirst = ({navigation}) => {
 
         // Navigate if the checkbox is checked
         if (!checkedProducts[productId]) {
-            navigation.navigate('Détail Produit', { productId, productName });
+            navigation.navigate('Détail Produit', {productId, productName});
         }
     }
 
@@ -160,7 +210,7 @@ const TracabiliteFirst = ({navigation}) => {
                             ))}
                         </ScrollView>
                         <View>
-                            <CustomButton title="Valider la saisie"/>
+                            <CustomButton title="Valider la saisie" handlePress={sendAllData} isLoading={isLoading}/>
                         </View>
                     </View>
                 </View>
