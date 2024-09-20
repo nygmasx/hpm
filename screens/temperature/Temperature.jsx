@@ -10,9 +10,6 @@ import CustomButton from "../../components/CustomButton";
 import axiosConfig from "../../helpers/axiosConfig";
 import {AuthContext} from "../../context/AuthProvider";
 import Toast from "react-native-toast-message";
-import Counter from "react-native-counters";
-import CounterInput from "react-native-counter-input";
-import CounterInputStyle from "react-native-counter-input/lib/CounterInput.style";
 import CustomCounter from "../../components/CustomCounter";
 
 const Temperature = ({navigation}) => {

@@ -31,6 +31,7 @@ import * as SecureStore from 'expo-secure-store';
 import Toast from "react-native-toast-message";
 import HistoriqueTracabilite from "./screens/historique/Tracabilite/HistoriqueTracabilite";
 import HistoSimplifiee from "./screens/historique/Tracabilite/HistoSimplifiee";
+import DetailBac from "./screens/huile/DetailBac";
 
 const TabIcon = ({color, icon, name, focused}) => {
     return (
@@ -93,6 +94,7 @@ export default function App() {
                         <Stack.Screen name="Détail Produit" component={DetailProduit} options={{title: ""}}/>
                         <Stack.Screen name="Temperature" component={Temperature}/>
                         <Stack.Screen name="Huile" component={Huile} options={{title: "Contrôle d'huiles "}}/>
+                        <Stack.Screen name="Détail Bac" component={DetailBac} options={{title: ""}}/>
                         <Stack.Screen name="Reception" component={Reception}/>
                         <Stack.Screen name="Nouvelle Reception" component={NouvelleReception}
                                       options={{title: "Réception planifiée"}}/>

@@ -1,66 +1,180 @@
-import React, {useState} from 'react';
-import {FlatList, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View} from "react-native";
+import React, {useContext, useEffect, useState} from 'react';
+import {
+    Alert,
+    FlatList,
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
+} from "react-native";
 import DateTimeField from "../../components/DateTimeField";
-import {Chip, Searchbar} from "react-native-paper";
 import {AntDesign, FontAwesome} from "@expo/vector-icons";
 import CustomButton from "../../components/CustomButton";
-import {CheckBox} from "@rneui/base";
+import CheckBox from "expo-checkbox";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import Modal from "react-native-modal";
 import FormField from "../../components/FormField";
-import CounterInput from "react-native-counter-input";
-import Counter from "react-native-counters";
-import {SelectList} from "react-native-dropdown-select-list";
+import axiosConfig from "../../helpers/axiosConfig";
+import Toast from "react-native-toast-message";
+import {AuthContext} from "../../context/AuthProvider";
 
-const Huile = ({navigation}) => {
+const Huile = ({navigation, route}) => {
 
-    const [check, setCheck] = useState(false)
-    const [selected, setSelected] = useState(false)
+    const [trayName, setTrayName] = useState('')
+    const [checkedOilTrays, setCheckedOilTrays] = useState({});
+    const [oilTrays, setOilTrays] = useState([])
+    const [selectedTrays, setSelectedTrays] = useState([])
+    const [isLoading, setIsLoading] = useState(false)
     const [isModalVisible, setIsModalVisible] = useState(false)
+    const {user} = useContext(AuthContext)
+
+    useEffect(() => {
+        if (route.params?.oilTrayData) {
+            setSelectedTrays(prev => [...prev, route.params.oilTrayData]);
+            console.log(selectedTrays)
+        }
+        fetchUserOilTrays();
+    }, [route.params]);
+
     const toggleModal = () => {
         setIsModalVisible(!isModalVisible)
     }
-    const handleCheck = () => {
-        setCheck(!check)
-        setSelected(!selected)
+
+    const fetchUserOilTrays = () => {
+        axiosConfig.get(`/user/${user.id}/oil-trays`, {})
+            .then(response => {
+                setOilTrays(response.data)
+            })
+            .catch(error => {
+                console.error(error)
+            })
     }
 
-    const EQUIPEMENT = [
-        {
-            id: 1,
-            name: 'Friteuse 1'
-        },
-        {
-            id: 2,
-            name: 'Friteuse Industrielle'
-        },
-    ]
+    const createOilTray = async () => {
+        setIsLoading(true)
+        const formData = new FormData();
+        formData.append('name', trayName)
 
-    const data = [
-        {key: '1', value: 'Mobiles', disabled: true},
-        {key: '2', value: 'Appliances'},
-        {key: '3', value: 'Cameras'},
-        {key: '4', value: 'Computers', disabled: true},
-        {key: '5', value: 'Vegetables'},
-        {key: '6', value: 'Diary Products'},
-        {key: '7', value: 'Drinks'},
-    ]
+        try {
+            axiosConfig.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
+            await axiosConfig.post('/oil-tray/new', formData);
+            await fetchUserOilTrays()
+            setIsModalVisible(!isModalVisible)
+            Toast.show({
+                type: 'success',
+                text1: 'Bac à huiles enregistré 🟢'
+            })
+        } catch (error) {
+            console.error(error.response?.data || error.message);
+            Toast.show({
+                type: 'error',
+                text1: 'Erreur, veuillez réessayer 🔴'
+            })
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+    const handleCheckboxChange = (oilTrayId, oilTrayName) => {
+        setCheckedOilTrays(prevState => {
+            const newCheckedZones = {...prevState, [oilTrayId]: !prevState[oilTrayId]};
+
+            // Determine if the checkbox was checked or unchecked
+            const wasChecked = prevState[oilTrayId];
+            const isChecked = !wasChecked;
+
+            if (isChecked) {
+                // Navigate to product detail if checked
+                navigation.navigate('Détail Bac', {oilTrayId, oilTrayName});
+            } else {
+                // Uncheck case: Remove the product from selectedProducts
+                setSelectedTrays(prevZones => {
+                    const updatedOilTray = prevZones.filter(oilTray => oilTray.oilTrayId !== oilTrayId);
+
+                    // Alert and log data when product is removed
+                    Alert.alert(
+                        "Bac à huile retiré",
+                        `Le produit ${oilTrayName} a été retiré de la sélection.`,
+                        [{text: "OK"}]
+                    );
+                    console.log('Updated Selected Zone:', updatedOilTray);
+
+                    return updatedOilTray;
+                });
+            }
+
+            return newCheckedZones;
+        });
+    };
+
+    const sendAllData = async () => {
+        if (selectedTrays.length === 0) {
+            Alert.alert("Aucun bac à huile sélectionné", "Veuillez sélectionner au moins un bac à huile avant de soumettre.", [{text: "OK"}]);
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            const formData = new FormData();
+            formData.append('date', new Date().toISOString().slice(0, 19).replace('T', ' '));
+
+            selectedTrays.forEach((tray, trayIndex) => {
+                if (tray.image) {
+                    formData.append(`oil_trays[${trayIndex}][image]`, {
+                        uri: tray.image.uri,
+                        name: tray.image.name,
+                        type: 'image/jpeg',
+                    });
+                }
+                formData.append(`oil_trays[${trayIndex}][oil_tray_id]`, tray.oilTrayId);
+                formData.append(`oil_trays[${trayIndex}][control_type]`, tray.controlType);
+                formData.append(`oil_trays[${trayIndex}][corrective_action]`, tray.correctiveAction);
+                formData.append(`oil_trays[${trayIndex}][temperature]`, tray.temperature);
+                formData.append(`oil_trays[${trayIndex}][polarity]`, tray.polarity);
+            });
+
+            axiosConfig.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
+            const response = await axiosConfig.post('/oil-control/new', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                }
+            });
+
+            console.log(response.data.message);
+            navigation.navigate('Accueil');
+            Toast.show({
+                type: 'success',
+                text1: 'Contrôle d\'huile enregistré 🟢'
+            });
+            setIsModalVisible(false);
+        } catch (error) {
+            console.error(error.response?.data || error.message);
+            Toast.show({
+                type: 'error',
+                text1: 'Erreur, veuillez réessayer 🔴'
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     const renderItem = ({item}) => (
-        <View className="flex-row justify-between border-b-[1px] border-b-secondary">
-            <View className="flex-row items-center">
-                <CheckBox checkedIcon={
-                    <AntDesign name="checkcircle" size={20} color="#008170"/>
-                } uncheckedIcon={
-                    <FontAwesome name="circle" size={20} color="#8F9098"/>
-                } checked={check} onPress={handleCheck}/>
-                <Text className="font-bold text-[16px]">{item.name}</Text>
+        <View className="flex-row justify-between border-b-[1px] border-b-secondary p-2">
+            <View className="flex-row items-center space-x-4">
+                <CheckBox
+                    value={!!checkedOilTrays[item.id]}
+                    onValueChange={() => handleCheckboxChange(item.id, item.name)}
+                    color="#008170"
+                    className="rounded-full w-[25px] h-[25px]"
+                />
+                <Text className="font-bold text-[18px]">{item.name}</Text>
             </View>
-            {!selected &&
+            {!item.checked &&
                 <View className="flex-row items-center space-x-1">
                     <TouchableOpacity onPress={toggleModal}>
-                        <MaterialIcons name="edit" size={20}
-                                       color="#008170"/>
+                        <MaterialIcons name="edit" size={20} color="#008170"/>
                     </TouchableOpacity>
                     <MaterialIcons name="cancel" size={20} color="#008170"/>
                 </View>
@@ -74,49 +188,13 @@ const Huile = ({navigation}) => {
                 <Modal isVisible={isModalVisible}>
                     <View className="p-6 space-y-8 bg-white items-center rounded-2xl justify-between">
                         <View className="w-full" style={{gap: 20}}>
-                            <Text className="text-xl text-center font-extrabold">Ajouter un congélateur</Text>
+                            <Text className="text-xl text-center font-extrabold">Ajouter un produit</Text>
                             <View className="space-y-4">
-                                <View className="flex-row items-center">
-                                    <View className="space-y-2">
-                                        <Text className="font-bold text-lg">Nom de l'équipement</Text>
-                                        <View className="flex-row w-full items-center space-x-4">
-                                            <View
-                                                className="border-[1px] border-secondary w-5/6 h-16 px-4 rounded-[12px] focus:border-primary items-center flex-row">
-                                                <TextInput
-                                                    className="flex-1 font-medium text-[18px] h-full w-full"
-                                                    placeholderTextColor="#7b7b8b"
-                                                />
-                                            </View>
-                                            <TouchableOpacity
-                                                className="bg-primary rounded-full items-center justify-center w-[45px] h-[45px]">
-                                                <FontAwesome name="camera" size={22} color="white"/>
-                                            </TouchableOpacity>
-                                        </View>
-                                    </View>
-                                </View>
-                                <View style={{gap: 10}}>
-                                    <Text className="font-bold text-lg">Température</Text>
-                                    <Counter buttonStyle={styles.buttons} buttonTextStyle={styles.color}/>
-                                </View>
-                                <View style={{gap: 10}}>
-                                    <Text className="font-bold text-lg">Polarité</Text>
-                                    <Counter buttonStyle={styles.buttons} buttonTextStyle={styles.color}/>
-                                </View>
-                                <View style={{gap: 10}}>
-                                    <Text className="font-bold text-lg">Action corrective</Text>
-                                    <View className="w-full flex-row items-center space-x-2">
-                                        <SelectList
-                                            setSelected={(value) => console.log(value)}
-                                            data={data}
-                                            boxStyles={styles.select}
-                                            placeholder="Refroidissement"
-                                        />
-                                        <TouchableOpacity
-                                            className="bg-primary rounded-full items-center justify-center w-[45px] h-[45px]">
-                                            <FontAwesome name="camera" size={22} color="white"/>
-                                        </TouchableOpacity>
-                                    </View>
-                                </View>
+                                <FormField
+                                    title="Nom du bac à huiles"
+                                    value={trayName}
+                                    handleChangeText={setTrayName}
+                                />
                             </View>
                         </View>
                         <View className="flex-row space-x-2 items-end">
@@ -126,7 +204,9 @@ const Huile = ({navigation}) => {
                             >
                                 <Text className="text-primary text-[16px] font-semibold">Annuler</Text>
                             </TouchableOpacity>
-                            <TouchableOpacity className="bg-primary justify-center items-center h-14 w-1/2 rounded-2xl">
+                            <TouchableOpacity className="bg-primary justify-center items-center h-14 w-1/2 rounded-2xl"
+                                              onPress={createOilTray}
+                            >
                                 <Text className="text-white text-[16px] font-semibold">Confirmer</Text>
                             </TouchableOpacity>
                         </View>
@@ -146,12 +226,12 @@ const Huile = ({navigation}) => {
                         </TouchableOpacity>
                     </View>
                     <View className="space-y-2">
-                        <FlatList data={EQUIPEMENT} renderItem={renderItem} keyExtractor={item => item.id}/>
+                        <FlatList data={oilTrays} renderItem={renderItem} keyExtractor={item => item.id}/>
                     </View>
                 </View>
             </View>
             <View className="absolute bottom-0 w-full px-4 my-12">
-                <CustomButton title="Valider la saisie"/>
+                <CustomButton title="Valider la saisie" handlePress={sendAllData}/>
             </View>
         </SafeAreaView>
     );

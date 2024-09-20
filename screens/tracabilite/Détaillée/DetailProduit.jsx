@@ -14,7 +14,7 @@ const DetailProduit = ({navigation}) => {
     const [quantity, setQuantity] = useState(0);
     const [images, setImages] = useState([]);
     const route = useRoute();
-    const { productName, productId, advancedTracabilityId } = route.params;
+    const { productName, productId } = route.params;
 
     useEffect(() => {
         navigation.setOptions({title: productName});
@@ -51,7 +51,7 @@ const DetailProduit = ({navigation}) => {
             images: images.map(image => ({ uri: image.uri, name: image.name, type: image.type }))
         };
         console.log(productData)
-        navigation.navigate('Tracabilite Détaillée', { productData, advancedTracabilityId });
+        navigation.navigate('Tracabilite Détaillée', { productData });
     };
 
     return (

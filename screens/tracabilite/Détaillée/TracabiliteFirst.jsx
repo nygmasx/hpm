@@ -46,6 +46,7 @@ const TracabiliteFirst = ({navigation, route}) => {
         if (route.params?.productData) {
             setSelectedProducts(prev => [...prev, route.params.productData]);
         }
+        console.log(selectedProducts)
         fetchUserProducts();
     }, [route.params]);
 
