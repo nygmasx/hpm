@@ -1,5 +1,5 @@
 import React, {useContext, useEffect, useState} from 'react';
-import {FlatList, SafeAreaView, Text, TextInput, TouchableOpacity, View} from "react-native";
+import {FlatList, SafeAreaView, Text, TextInput, TouchableOpacity, View, Dimensions, StyleSheet} from "react-native";
 import DateTimeField from "../../components/DateTimeField";
 import {AntDesign, FontAwesome} from "@expo/vector-icons";
 import CheckBox from "expo-checkbox";
@@ -11,6 +11,8 @@ import axiosConfig from "../../helpers/axiosConfig";
 import {AuthContext} from "../../context/AuthProvider";
 import Toast from "react-native-toast-message";
 import CustomCounter from "../../components/CustomCounter";
+
+const { width, height } = Dimensions.get('window');
 
 const Temperature = ({navigation}) => {
 
@@ -172,115 +174,245 @@ const Temperature = ({navigation}) => {
 
 
 
-    const renderItem = ({item}) => (
-        <View className="flex-row justify-between border-b-[1px] border-b-secondary p-2">
-            <View className="flex-row items-center space-x-4">
+    const renderItem = ({ item }) => (
+        <View style={styles.equipmentItem}>
+            <View style={styles.equipmentInfo}>
                 <CheckBox
                     value={item.checked}
                     onValueChange={() => handleCheck(item.id)}
                     color="#008170"
-                    className="rounded-full w-[25px] h-[25px]"
+                    style={styles.checkbox}
                 />
-                <Text className="font-bold text-[18px]">{item.name}</Text>
+                <Text style={styles.equipmentName}>{item.name}</Text>
             </View>
             {!item.checked &&
-                <View className="flex-row items-center space-x-1">
+                <View style={styles.equipmentActions}>
                     <TouchableOpacity onPress={toggleModal}>
-                        <MaterialIcons name="edit" size={20} color="#008170"/>
+                        <MaterialIcons name="edit" size={20} color="#008170" />
                     </TouchableOpacity>
-                    <MaterialIcons name="cancel" size={20} color="#008170"/>
+                    <MaterialIcons name="cancel" size={20} color="#008170" />
                 </View>
             }
             {item.checked && (
-                <>
-                    <CustomCounter
-                        value={item.degree}
-                        handleChange={(newDegree) => handleDegreeChange(item.id, newDegree)}
-                        initial={item.type === "Frigo" ? 0 : (item.type === "Congélateur" ? -25 : 0)}
-                        min={item.type === "Frigo" ? 0 : (item.type === "Congélateur" ? -25 : 0)}
-                        max={item.type === "Frigo" ? 4 : (item.type === "Congélateur" ? -18 : 0)}
-                    />
-                </>
+                <CustomCounter
+                    value={item.degree}
+                    handleChange={(newDegree) => handleDegreeChange(item.id, newDegree)}
+                    initial={item.type === "Frigo" ? 0 : (item.type === "Congélateur" ? -25 : 0)}
+                    min={item.type === "Frigo" ? 0 : (item.type === "Congélateur" ? -25 : 0)}
+                    max={item.type === "Frigo" ? 4 : (item.type === "Congélateur" ? -18 : 0)}
+                />
             )}
         </View>
     );
 
     return (
-        <SafeAreaView className="bg-white flex-1 h-full">
-            <View>
-                <Modal isVisible={isModalVisible}>
-                    <View className="p-6 space-y-8 bg-white items-center rounded-2xl justify-between">
-                        <View className="w-full" style={{gap: 20}}>
-                            <Text className="text-xl text-center font-extrabold">Ajouter un équipement</Text>
-                            <View className="space-y-4">
-                                <FormField title="Nom de l'équipement" value={equipmentName}
-                                           handleChangeText={setEquipmentName}/>
-                                <Text className="font-bold text-[16px]">Sélectionnez un type</Text>
-                                <View className="space-y-4">
-                                    <TouchableOpacity
-                                        onPress={() => handlingEquipmentType("Congélateur")}
-                                        className={`w-full flex-row justify-between items-center ${selectedType === 'Congélateur' ? 'bg-primary text-white' : 'bg-secondary-200'} p-5 rounded-2xl`}>
-                                        <View>
-                                            <Text
-                                                className={`text-xl font-extrabold ${selectedType === 'Congélateur' ? 'text-white' : ''}`}>Congélateur</Text>
-                                            <Text>min: -25°C, max: -18°C</Text>
-                                        </View>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        onPress={() => handlingEquipmentType("Frigo")}
-                                        className={`w-full flex-row justify-between items-center ${selectedType === 'Frigo' ? 'bg-primary text-white' : 'bg-secondary-200'} p-5 rounded-2xl`}>
-                                        <Text
-                                            className={`text-xl font-extrabold ${selectedType === 'Frigo' ? 'text-white' : ''}`}>Frigo</Text>
-                                        <Text>min: 0°C, max: 4°C</Text>
-                                    </TouchableOpacity>
-                                    <TouchableOpacity
-                                        onPress={() => handlingEquipmentType("Chaud")}
-                                        className={`w-full flex-row justify-between items-center ${selectedType === 'Chaud' ? 'bg-primary text-white' : 'bg-secondary-200'} p-5 rounded-2xl`}>
-                                        <Text
-                                            className={`text-xl font-extrabold ${selectedType === 'Chaud' ? 'text-white' : ''}`}>Chaud</Text>
-                                        <Text>min: 63°C</Text>
-                                    </TouchableOpacity>
-                                </View>
-                            </View>
-                        </View>
-                        <View className="flex-row space-x-2 items-end">
+        <SafeAreaView style={styles.container}>
+            <Modal isVisible={isModalVisible}>
+                <View style={styles.modalContent}>
+                    <Text style={styles.modalTitle}>Ajouter un équipement</Text>
+                    <View style={styles.modalForm}>
+                        <FormField title="Nom de l'équipement" value={equipmentName} handleChangeText={setEquipmentName} />
+                        <Text style={styles.typeSelectionTitle}>Sélectionnez un type</Text>
+                        {['Congélateur', 'Frigo', 'Chaud'].map((type) => (
                             <TouchableOpacity
-                                className="border-primary justify-center border-2 h-14 items-center w-1/2 rounded-2xl"
-                                onPress={toggleModal}
+                                key={type}
+                                onPress={() => handlingEquipmentType(type)}
+                                style={[
+                                    styles.typeButton,
+                                    selectedType === type && styles.selectedTypeButton
+                                ]}
                             >
-                                <Text className="text-primary text-[16px] font-semibold">Annuler</Text>
+                                <Text style={[
+                                    styles.typeButtonText,
+                                    selectedType === type && styles.selectedTypeButtonText
+                                ]}>{type}</Text>
+                                <Text style={styles.typeButtonSubtext}>
+                                    {type === 'Congélateur' ? 'min: -25°C, max: -18°C' :
+                                        type === 'Frigo' ? 'min: 0°C, max: 4°C' : 'min: 63°C'}
+                                </Text>
                             </TouchableOpacity>
-                            <TouchableOpacity className="bg-primary justify-center items-center h-14 w-1/2 rounded-2xl"
-                                              onPress={equipmentCreate}
-                            >
-                                <Text className="text-white text-[16px] font-semibold">Confirmer</Text>
-                            </TouchableOpacity>
-                        </View>
+                        ))}
                     </View>
-                </Modal>
-            </View>
-            <View className="w-full flex-1 px-4 my-6 h-full flex-col space-y-8">
-                <DateTimeField title="Date du relevé de température"/>
-                <View className="space-y-4">
-                    <View className="w-full flex-row justify-between items-center">
-                        <Text className="font-semibold text-[16px]">Équipements</Text>
-                        <TouchableOpacity
-                            onPress={toggleModal}
-                            className="px-2 py-1 space-x-2 bg-primary rounded-2xl items-center flex-row">
-                            <Text className="text-white font-bold ml-2">Ajouter</Text>
-                            <AntDesign name="plus" size="20" color="white"/>
+                    <View style={styles.modalActions}>
+                        <TouchableOpacity style={styles.cancelButton} onPress={toggleModal}>
+                            <Text style={styles.cancelButtonText}>Annuler</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.confirmButton} onPress={equipmentCreate}>
+                            <Text style={styles.confirmButtonText}>Confirmer</Text>
                         </TouchableOpacity>
                     </View>
-                    <View className="space-y-2">
-                        <FlatList data={equipments} renderItem={renderItem} keyExtractor={item => item.id.toString()}/>
+                </View>
+            </Modal>
+            <View style={styles.content}>
+                <DateTimeField title="Date du relevé de température" />
+                <View style={styles.equipmentSection}>
+                    <View style={styles.sectionHeader}>
+                        <Text style={styles.sectionTitle}>Équipements</Text>
+                        <TouchableOpacity onPress={toggleModal} style={styles.addButton}>
+                            <Text style={styles.addButtonText}>Ajouter</Text>
+                            <AntDesign name="plus" size={20} color="white" />
+                        </TouchableOpacity>
                     </View>
+                    <FlatList
+                        data={equipments}
+                        renderItem={renderItem}
+                        keyExtractor={item => item.id.toString()}
+                        style={styles.equipmentList}
+                    />
                 </View>
             </View>
-            <View className="absolute bottom-0 w-full px-4 my-12">
-                <CustomButton title="Valider la saisie" handlePress={sendData}/>
+            <View style={styles.submitButtonContainer}>
+                <CustomButton title="Valider la saisie" handlePress={sendData} />
             </View>
         </SafeAreaView>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: 'white',
+    },
+    content: {
+        flex: 1,
+        paddingHorizontal: width * 0.04,
+        paddingVertical: height * 0.03,
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        padding: width * 0.06,
+        borderRadius: 20,
+    },
+    modalTitle: {
+        fontSize: width * 0.05,
+        fontWeight: '800',
+        textAlign: 'center',
+        marginBottom: height * 0.02,
+    },
+    modalForm: {
+        marginVertical: height * 0.02,
+    },
+    typeSelectionTitle: {
+        fontWeight: '700',
+        fontSize: width * 0.04,
+        marginBottom: height * 0.01,
+    },
+    typeButton: {
+        width: '100%',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: '#F5F5F5',
+        padding: width * 0.04,
+        borderRadius: 16,
+        marginBottom: height * 0.01,
+    },
+    selectedTypeButton: {
+        backgroundColor: '#008170',
+    },
+    typeButtonText: {
+        fontSize: width * 0.045,
+        fontWeight: '800',
+    },
+    selectedTypeButtonText: {
+        color: 'white',
+    },
+    typeButtonSubtext: {
+        fontSize: width * 0.035,
+    },
+    modalActions: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: height * 0.02,
+    },
+    cancelButton: {
+        borderColor: '#008170',
+        borderWidth: 2,
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: height * 0.06,
+        width: '48%',
+        borderRadius: 16,
+    },
+    cancelButtonText: {
+        color: '#008170',
+        fontSize: width * 0.04,
+        fontWeight: '600',
+    },
+    confirmButton: {
+        backgroundColor: '#008170',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: height * 0.06,
+        width: '48%',
+        borderRadius: 16,
+    },
+    confirmButtonText: {
+        color: 'white',
+        fontSize: width * 0.04,
+        fontWeight: '600',
+    },
+    equipmentSection: {
+        marginTop: height * 0.03,
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: height * 0.02,
+    },
+    sectionTitle: {
+        fontWeight: '600',
+        fontSize: width * 0.04,
+    },
+    addButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#008170',
+        paddingVertical: height * 0.01,
+        paddingHorizontal: width * 0.03,
+        borderRadius: 16,
+    },
+    addButtonText: {
+        color: 'white',
+        fontWeight: '700',
+        marginRight: width * 0.02,
+    },
+    equipmentList: {
+        maxHeight: height * 0.5,
+    },
+    equipmentItem: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderBottomWidth: 1,
+        borderBottomColor: '#F5F5F5',
+        paddingVertical: height * 0.015,
+    },
+    equipmentInfo: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    checkbox: {
+        borderRadius: 12.5,
+        width: 25,
+        height: 25,
+        marginRight: width * 0.03,
+    },
+    equipmentName: {
+        fontWeight: '700',
+        fontSize: width * 0.045,
+    },
+    equipmentActions: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    submitButtonContainer: {
+        position: 'absolute',
+        bottom: height * 0.05,
+        width: '100%',
+        paddingHorizontal: width * 0.04,
+    },
+});
 
 export default Temperature;

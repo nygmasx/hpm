@@ -32,6 +32,7 @@ import Toast from "react-native-toast-message";
 import HistoriqueTracabilite from "./screens/historique/Tracabilite/HistoriqueTracabilite";
 import HistoSimplifiee from "./screens/historique/Tracabilite/HistoSimplifiee";
 import DetailBac from "./screens/huile/DetailBac";
+import HistoDetaillee from "./screens/historique/Tracabilite/HistoDetaillee";
 
 const TabIcon = ({color, icon, name, focused}) => {
     return (
@@ -107,7 +108,8 @@ export default function App() {
                         <Stack.Screen name="TcProduit" component={TcProduit} options={{title: "T°C produit"}}/>
                         <Stack.Screen name="TcpOperation" component={TcpOperation} options={{title: "T°C - Produit"}}/>
                         <Stack.Screen name="Historique Tracabilite" component={HistoriqueTracabilite} options={{title: "Historique de traçabilité"}}/>
-                        <Stack.Screen name="Historique Tracabilite Simplifiée" component={HistoSimplifiee} options={{title: "Historique de traçabilité simplifiée"}}/>
+                        <Stack.Screen name="Historique Tracabilité Simplifiée" component={HistoSimplifiee} options={{title: "Historique de traçabilité simplifiée"}}/>
+                        <Stack.Screen name="Historique Tracabilité Détaillée" component={HistoDetaillee} options={{title: "Historique de traçabilité détaillée"}}/>
                     </Stack.Navigator>
                 </NavigationContainer>
             ) : (

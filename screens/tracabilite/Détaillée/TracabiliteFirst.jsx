@@ -5,7 +5,9 @@ import {
     ScrollView,
     Text,
     TouchableOpacity,
-    View
+    View,
+    StyleSheet,
+    Dimensions
 } from "react-native";
 import DateTimeField from "../../../components/DateTimeField";
 import {Chip, Searchbar} from "react-native-paper";
@@ -17,6 +19,8 @@ import FormField from "../../../components/FormField";
 import Modal from "react-native-modal";
 import Toast from "react-native-toast-message";
 import CheckBox from "expo-checkbox";
+
+const { width, height } = Dimensions.get('window');
 
 const TracabiliteFirst = ({navigation, route}) => {
 
@@ -178,120 +182,225 @@ const TracabiliteFirst = ({navigation, route}) => {
         product.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-
     return (
-        <SafeAreaView className="bg-white flex-1 h-full">
+        <SafeAreaView style={styles.container}>
             <Modal isVisible={isModalVisible}>
-                <View className="p-6 space-y-8 bg-white items-center rounded-2xl justify-between">
-                    <View className="w-full" style={{gap: 20}}>
-                        <Text className="text-xl text-center font-extrabold">Ajouter un produit</Text>
-                        <View className="space-y-4">
-                            <FormField title="Nom de l'équipement" value={productName}
-                                       handleChangeText={setProductName}/>
+                <View style={styles.modalContent}>
+                    <View style={styles.modalHeader}>
+                        <Text style={styles.modalTitle}>Ajouter un produit</Text>
+                        <View style={styles.formField}>
+                            <FormField title="Nom de l'équipement" value={productName} handleChangeText={setProductName} />
                         </View>
                     </View>
-                    <View className="flex-row space-x-2 items-end">
-                        <TouchableOpacity
-                            className="border-primary justify-center border-2 h-14 items-center w-1/2 rounded-2xl"
-                            onPress={toggleModal}
-                        >
-                            <Text className="text-primary text-[16px] font-semibold">Annuler</Text>
+                    <View style={styles.modalButtons}>
+                        <TouchableOpacity style={styles.cancelButton} onPress={toggleModal}>
+                            <Text style={styles.cancelButtonText}>Annuler</Text>
                         </TouchableOpacity>
-                        <TouchableOpacity className="bg-primary justify-center items-center h-14 w-1/2 rounded-2xl"
-                                          onPress={sendProductData}
-                        >
-                            <Text className="text-white text-[16px] font-semibold">Confirmer</Text>
+                        <TouchableOpacity style={styles.confirmButton} onPress={sendProductData}>
+                            <Text style={styles.confirmButtonText}>Confirmer</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
             </Modal>
-            <ScrollView style={{height: "100%"}}>
-                <View className="w-full flex-1 px-4 my-6 justify-between flex-col space-y-4">
-                    <DateTimeField title="Date d’ouverture du/des produit(s)"/>
-                    <View className="space-y-4">
-                        <Text className="font-bold text-lg">Durant quel service ?</Text>
-                        <View className="flex-row" style={{gap: 10}}>
-                            <Chip
-                                className={`rounded-2xl ${selectedService === 'Matin' ? 'bg-[#008170] text-white' : 'bg-[#EAF2FF]'}`}
-                                textStyle={{
-                                    color: selectedService === 'Matin' ? 'white' : '#008170',
-                                    textTransform: "uppercase"
-                                }}
-                                onPress={() => handleChipClick('Matin')}
-                            >
-                                Matin
-                            </Chip>
-                            <Chip
-                                className={`rounded-2xl ${selectedService === 'Midi' ? 'bg-[#008170] text-white' : 'bg-[#EAF2FF]'}`}
-                                textStyle={{
-                                    color: selectedService === 'Midi' ? 'white' : '#008170',
-                                    textTransform: "uppercase"
-                                }}
-                                onPress={() => handleChipClick('Midi')}
-                            >
-                                Midi
-                            </Chip>
-                            <Chip
-                                className={`rounded-2xl ${selectedService === 'Soir' ? 'bg-[#008170] text-white' : 'bg-[#EAF2FF]'}`}
-                                textStyle={{
-                                    color: selectedService === 'Soir' ? 'white' : '#008170',
-                                    textTransform: "uppercase"
-                                }}
-                                onPress={() => handleChipClick('Soir')}
-                            >
-                                Soir
-                            </Chip>
-                            <Chip
-                                className={`rounded-2xl ${selectedService === 'Indifférent' ? 'bg-[#008170] text-white' : 'bg-[#EAF2FF]'}`}
-                                textStyle={{
-                                    color: selectedService === 'Indifférent' ? 'white' : '#008170',
-                                    textTransform: "uppercase"
-                                }}
-                                onPress={() => handleChipClick('Indifférent')}
-                            >
-                                Indifférent
-                            </Chip>
+            <ScrollView style={styles.scrollView}>
+                <View style={styles.content}>
+                    <DateTimeField title="Date d'ouverture du/des produit(s)" />
+                    <View style={styles.serviceSection}>
+                        <Text style={styles.sectionTitle}>Durant quel service ?</Text>
+                        <View style={styles.chipContainer}>
+                            {['Matin', 'Midi', 'Soir', 'Indifférent'].map((service) => (
+                                <Chip
+                                    key={service}
+                                    style={[
+                                        styles.chip,
+                                        selectedService === service && styles.selectedChip
+                                    ]}
+                                    textStyle={[
+                                        styles.chipText,
+                                        selectedService === service && styles.selectedChipText
+                                    ]}
+                                    onPress={() => handleChipClick(service)}
+                                >
+                                    {service}
+                                </Chip>
+                            ))}
                         </View>
                     </View>
-                    <View style={{gap: 20}}>
-                        <Text className="font-bold text-lg">Produits</Text>
-                        <View className="w-full items-center space-x-4 flex-row">
-                            <Searchbar className="w-4/5 bg-secondary-100" placeholder="Rechercher un produit"
-                                       value={searchQuery} onChangeText={handleSearch}/>
-                            <TouchableOpacity
-                                className="rounded-full w-[45px] h-[45px] justify-center items-center bg-primary"
-                                onPress={toggleModal}
-                            >
-                                <AntDesign name="plus" size={24} color="white"/>
+                    <View style={styles.productsSection}>
+                        <Text style={styles.sectionTitle}>Produits</Text>
+                        <View style={styles.searchContainer}>
+                            <Searchbar
+                                style={styles.searchBar}
+                                placeholder="Rechercher un produit"
+                                value={searchQuery}
+                                onChangeText={handleSearch}
+                            />
+                            <TouchableOpacity style={styles.addButton} onPress={toggleModal}>
+                                <AntDesign name="plus" size={24} color="white" />
                             </TouchableOpacity>
                         </View>
-                        <ScrollView style={{height: 300}} contentContainerStyle={{gap: 10}}>
+                        <ScrollView style={styles.productList} contentContainerStyle={styles.productListContent}>
                             {filteredProducts.map(product => (
-                                <View key={product.id}
-                                      className="bg-secondary-200 w-full items-center justify-between rounded-2xl p-4 flex-row">
+                                <View key={product.id} style={styles.productItem}>
                                     <View>
-                                        <Text className="font-bold text-lg">{product.name}</Text>
+                                        <Text style={styles.productName}>{product.name}</Text>
                                         <Text>1kg</Text>
                                     </View>
-                                    <View>
-                                        <CheckBox
-                                            value={!!checkedProducts[product.id]}
-                                            onValueChange={() => handleCheckboxChange(product.id, product.name)}
-                                            color="#008170"
-                                            className="rounded-full w-[25px] h-[25px]"
-                                        />
-                                    </View>
+                                    <CheckBox
+                                        value={!!checkedProducts[product.id]}
+                                        onValueChange={() => handleCheckboxChange(product.id, product.name)}
+                                        color="#008170"
+                                        style={styles.checkbox}
+                                    />
                                 </View>
                             ))}
                         </ScrollView>
-                        <View>
-                            <CustomButton title="Valider la saisie" handlePress={sendAllData} isLoading={isLoading}/>
-                        </View>
+                        <CustomButton title="Valider la saisie" handlePress={sendAllData} isLoading={isLoading} />
                     </View>
                 </View>
             </ScrollView>
         </SafeAreaView>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: 'white',
+    },
+    scrollView: {
+        height: '100%',
+    },
+    content: {
+        flex: 1,
+        paddingHorizontal: width * 0.04,
+        paddingVertical: height * 0.03,
+        justifyContent: 'space-between',
+    },
+    modalContent: {
+        padding: width * 0.06,
+        backgroundColor: 'white',
+        borderRadius: 20,
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    modalHeader: {
+        width: '100%',
+        marginBottom: height * 0.04,
+    },
+    modalTitle: {
+        fontSize: width * 0.05,
+        fontWeight: '800',
+        textAlign: 'center',
+        marginBottom: height * 0.02,
+    },
+    formField: {
+        marginTop: height * 0.02,
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
+    },
+    cancelButton: {
+        borderColor: '#008170',
+        borderWidth: 2,
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: height * 0.06,
+        width: '48%',
+        borderRadius: 16,
+    },
+    cancelButtonText: {
+        color: '#008170',
+        fontSize: width * 0.04,
+        fontWeight: '600',
+    },
+    confirmButton: {
+        backgroundColor: '#008170',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: height * 0.06,
+        width: '48%',
+        borderRadius: 16,
+    },
+    confirmButtonText: {
+        color: 'white',
+        fontSize: width * 0.04,
+        fontWeight: '600',
+    },
+    serviceSection: {
+        marginVertical: height * 0.02,
+    },
+    sectionTitle: {
+        fontWeight: '700',
+        fontSize: width * 0.045,
+        marginBottom: height * 0.015,
+    },
+    chipContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: width * 0.02,
+    },
+    chip: {
+        borderRadius: 16,
+        backgroundColor: '#EAF2FF',
+    },
+    selectedChip: {
+        backgroundColor: '#008170',
+    },
+    chipText: {
+        color: '#008170',
+        textTransform: 'uppercase',
+    },
+    selectedChipText: {
+        color: 'white',
+    },
+    productsSection: {
+        marginTop: height * 0.03,
+    },
+    searchContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: height * 0.02,
+    },
+    searchBar: {
+        flex: 1,
+        marginRight: width * 0.02,
+        backgroundColor: '#F5F5F5',
+    },
+    addButton: {
+        borderRadius: 22.5,
+        width: 45,
+        height: 45,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#008170',
+    },
+    productList: {
+        height: height * 0.35,
+    },
+    productListContent: {
+        gap: height * 0.015,
+    },
+    productItem: {
+        backgroundColor: '#F5F5F5',
+        width: '100%',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        borderRadius: 16,
+        padding: width * 0.04,
+    },
+    productName: {
+        fontWeight: '700',
+        fontSize: width * 0.045,
+    },
+    checkbox: {
+        borderRadius: 12.5,
+        width: 25,
+        height: 25,
+    },
+});
 
 export default TracabiliteFirst;

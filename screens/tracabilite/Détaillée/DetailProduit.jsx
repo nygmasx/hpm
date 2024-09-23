@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {SafeAreaView, Text, TouchableOpacity, View} from "react-native";
+import {SafeAreaView, Text, TouchableOpacity, View, StyleSheet, Dimensions} from "react-native";
 import RNDateTimePicker from "@react-native-community/datetimepicker";
 import {FontAwesome, Ionicons} from "@expo/vector-icons";
 import CounterInput from "react-native-counter-input";

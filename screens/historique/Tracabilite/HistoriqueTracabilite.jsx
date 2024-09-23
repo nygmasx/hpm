@@ -13,9 +13,9 @@ const HistoriqueTracabilite = ({navigation}) => {
     return (
         <SafeAreaView className="bg-white flex-1 h-full">
             <View className="w-full flex-1 px-4 my-6" style={{gap: 20}}>
-                <ActionModal route="Historique Tracabilite Simplifiée" navigation={navigation} title="Tracabilité simplifiée"
+                <ActionModal route="Historique Tracabilité Simplifiée" navigation={navigation} title="Tracabilité simplifiée"
                              subtitle="Une photo, un clic" icon="barcode-sharp"/>
-                <ActionModal route="Tracabilite Détaillée" navigation={navigation} title="Tracabilité détaillée"
+                <ActionModal route="Historique Tracabilité Détaillée" navigation={navigation} title="Tracabilité détaillée"
                              subtitle="Choix du produit, N° de lot, DLC"
                              icon="barcode-sharp"/>
                 <Divider/>

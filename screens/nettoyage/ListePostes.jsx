@@ -1,340 +1,539 @@
-import React, {useContext, useEffect, useState} from 'react';
-import {SafeAreaView, ScrollView, Text, TouchableOpacity, View} from "react-native";
-import {FontAwesome, Ionicons} from "@expo/vector-icons";
+import React, { useContext, useEffect, useState } from 'react';
+import { SafeAreaView, ScrollView, Text, TouchableOpacity, View, Image, StyleSheet, Dimensions } from "react-native";
+import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
 import CustomButton from "../../components/CustomButton";
-import {useRoute} from "@react-navigation/native";
+import { useRoute, useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import Toast from "react-native-toast-message";
 import axiosConfig from "../../helpers/axiosConfig";
-import {AuthContext} from "../../context/AuthProvider";
 import FormField from "../../components/FormField";
 import Modal from "react-native-modal";
 
-const ListePostes = ({navigation}) => {
+const { width, height } = Dimensions.get('window');
 
-        const [selected, setSelected] = useState(false);
-        const [cleaningStations, setCleaningStations] = useState([]);
-        const [cleaningStationName, setCleaningStationName] = useState('');
-        const [selectedStations, setSelectedStations] = useState({});
-        const [isModalVisible, setIsModalVisible] = useState(false);
-        const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-        const [isCommentModalVisible, setIsCommentModalVisible] = useState(false);
-        const [comment, setComment] = useState('')
-        const [isLoading, setIsLoading] = useState(false);
-        const [editStationId, setEditStationId] = useState(null); // Added state to track stationId for editing
-        const route = useRoute();
-        const {zoneName, zoneId} = route.params;
-        const [images, setImages] = useState([]);
+const ListePostes = () => {
+    const [cleaningStations, setCleaningStations] = useState([]);
+    const [cleaningStationName, setCleaningStationName] = useState('');
+    const [selectedStations, setSelectedStations] = useState({});
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+    const [isCommentModalVisible, setIsCommentModalVisible] = useState(false);
+    const [comment, setComment] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [editStationId, setEditStationId] = useState(null);
+    const route = useRoute();
+    const navigation = useNavigation();
+    const {zoneName, zoneId} = route.params;
+    const [stationData, setStationData] = useState({});
 
-        const toggleModal = () => {
-            setIsModalVisible(!isModalVisible);
-            console.log(isModalVisible)
-        };
+    useEffect(() => {
+        fetchCleaningStation();
+    }, []);
 
-        const toggleEditModal = () => {
-            setIsEditModalVisible(!isEditModalVisible);
-        };
-
-        const toggleCommentModal = () => {
-            setIsCommentModalVisible(!isCommentModalVisible);
-        };
-
-        useEffect(() => {
-            fetchCleaningStation();
-        }, []);
-
-        const fetchCleaningStation = () => {
-            axiosConfig.get(`/cleaning-zone/${zoneId}/cleaning-station`, {})
-                .then(response => {
-                    setCleaningStations(response.data);
-                })
-                .catch(error => {
-                    console.error(error);
+    const fetchCleaningStation = () => {
+        console.log(`Fetching cleaning stations for zone ID: ${zoneId}`);
+        axiosConfig.get(`/cleaning-zone/${zoneId}/cleaning-station`, {})
+            .then(response => {
+                console.log(`Received ${response.data.length} cleaning stations`);
+                setCleaningStations(response.data);
+                const initialStationData = {};
+                response.data.forEach(station => {
+                    initialStationData[station.id] = {comment: '', image: null};
                 });
-        };
+                setStationData(initialStationData);
+                console.log('Station data initialized');
+            })
+            .catch(error => {
+                console.error('Error fetching cleaning stations:', error);
+            });
+    };
 
-        const updateCleaningStation = async (stationId) => {
-            if (!stationId || !cleaningStationName || !zoneId) {
-                Toast.show({
-                    type: 'error',
-                    text1: 'Veuillez vérifier les champs obligatoires 🔴',
-                });
-                return;
-            }
-
-            setIsLoading(true);
-
-            const data = {
-                name: cleaningStationName,
-                cleaning_zone_id: zoneId
-            };
-
-            console.log("Data being sent:", data);
-
-            try {
-                await axiosConfig.put(`/cleaning-station/${stationId}/edit`, data, {
-                    headers: {
-                        'Content-Type': 'application/json', // Explicitly set JSON headers
-                    },
-                });
-                await fetchCleaningStation();
-                setIsEditModalVisible(false);
-                Toast.show({
-                    type: 'success',
-                    text1: 'Poste de nettoyage mis à jour 🟢',
-                });
-            } catch (error) {
-                console.error("Error response:", error.response?.data || error.message);
-                Toast.show({
-                    type: 'error',
-                    text1: 'Erreur, veuillez réessayer 🔴',
-                });
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        const createCleaningStation = async () => {
-            if (!zoneId) {
-                Toast.show({
-                    type: 'error',
-                    text1: 'Zone ID is missing or invalid 🔴',
-                });
-                return;
-            }
-
-            setIsLoading(true);
-            const formData = new FormData();
-            formData.append('name', cleaningStationName);
-            formData.append('cleaning_zone_id', zoneId);
-
-            try {
-                await axiosConfig.post('/cleaning-station/new', formData);
-                await fetchCleaningStation();
-                setIsModalVisible(false);
-                Toast.show({
-                    type: 'success',
-                    text1: 'Poste de nettoyage enregistré 🟢',
-                });
-                setCleaningStationName('')
-            } catch (error) {
-                console.error(error.response?.data || error.message);
-                Toast.show({
-                    type: 'error',
-                    text1: 'Erreur, veuillez réessayer 🔴',
-                });
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        const deleteCleaningZone = async (stationId) => {
-            await axiosConfig.delete(`/cleaning-station/${stationId}/delete`, {})
-                .then(response => {
-                    fetchCleaningStation();
-                    Toast.show({
-                        type: 'success',
-                        text1: 'Poste de nettoyage supprimé 🟢',
-                    });
-                })
-                .catch(error => {
-                    console.error(error.response?.data || error.message);
-                    Toast.show({
-                        type: 'error',
-                        text1: 'Erreur, veuillez réessayer 🔴',
-                    });
-                })
+    const createCleaningStation = async () => {
+        console.log(`Attempting to create cleaning station: ${cleaningStationName}`);
+        if (!cleaningStationName || !zoneId) {
+            console.warn('Missing required fields for creating cleaning station');
+            Toast.show({
+                type: 'error',
+                text1: 'Veuillez vérifier les champs obligatoires 🔴',
+            });
+            return;
         }
 
-        const handlePress = (stationId, stationName) => {
-            setSelectedStations(prevState => {
-                const newSelectedStations = {...prevState, [stationId]: !prevState[stationId]};
+        setIsLoading(true);
 
-                if (!prevState[stationId]) {
-                    console.log(`Poste ${stationName} sélectionné`);
-                } else {
-                    Toast.show({
-                        type: 'success',
-                        text1: `Le poste ${stationName} a été désélectionné`,
-                    });
-                    console.log(`Poste ${stationName} désélectionné`);
-                }
-                console.log(newSelectedStations);
-                return newSelectedStations;
+        const data = {
+            name: cleaningStationName,
+            cleaning_zone_id: zoneId
+        };
+
+        try {
+            const response = await axiosConfig.post('/cleaning-station/new', data);
+            console.log('Cleaning station created successfully:', response.data);
+            await fetchCleaningStation();
+            setIsModalVisible(false);
+            Toast.show({
+                type: 'success',
+                text1: 'Poste de nettoyage enregistré 🟢',
             });
+            setCleaningStationName('');
+        } catch (error) {
+            console.error('Error creating cleaning station:', error.response?.data || error.message);
+            Toast.show({
+                type: 'error',
+                text1: 'Erreur, veuillez réessayer 🔴',
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const updateCleaningStation = async (stationId) => {
+        console.log(`Attempting to update cleaning station ID: ${stationId}`);
+        if (!stationId || !cleaningStationName || !zoneId) {
+            console.warn('Missing required fields for updating cleaning station');
+            Toast.show({
+                type: 'error',
+                text1: 'Veuillez vérifier les champs obligatoires 🔴',
+            });
+            return;
+        }
+
+        setIsLoading(true);
+
+        const data = {
+            name: cleaningStationName,
+            cleaning_zone_id: zoneId
         };
 
-        const uploadImages = async () => {
-            try {
-                const result = await ImagePicker.launchCameraAsync({
-                    allowsEditing: true,
-                    aspect: [1, 1],
-                    quality: 1,
+        try {
+            const response = await axiosConfig.put(`/cleaning-station/${stationId}/edit`, data);
+            console.log('Cleaning station updated successfully:', response.data);
+            await fetchCleaningStation();
+            setIsEditModalVisible(false);
+            Toast.show({
+                type: 'success',
+                text1: 'Poste de nettoyage mis à jour 🟢',
+            });
+        } catch (error) {
+            console.error('Error updating cleaning station:', error.response?.data || error.message);
+            Toast.show({
+                type: 'error',
+                text1: 'Erreur, veuillez réessayer 🔴',
+            });
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    const deleteCleaningZone = async (stationId) => {
+        console.log(`Attempting to delete cleaning station ID: ${stationId}`);
+        try {
+            const response = await axiosConfig.delete(`/cleaning-station/${stationId}/delete`, {});
+            console.log('Cleaning station deleted successfully:', response.data);
+            await fetchCleaningStation();
+            Toast.show({
+                type: 'success',
+                text1: 'Poste de nettoyage supprimé 🟢',
+            });
+        } catch (error) {
+            console.error('Error deleting cleaning station:', error.response?.data || error.message);
+            Toast.show({
+                type: 'error',
+                text1: 'Erreur, veuillez réessayer 🔴',
+            });
+        }
+    };
+
+    const handlePress = (stationId) => {
+        console.log(`Toggling selection for station ID: ${stationId}`);
+        setSelectedStations(prevState => {
+            const newState = {
+                ...prevState,
+                [stationId]: !prevState[stationId]
+            };
+            console.log('Updated selected stations:', newState);
+            return newState;
+        });
+    };
+
+    const uploadImage = async (stationId) => {
+        console.log(`Attempting to upload image for station ID: ${stationId}`);
+        try {
+            const result = await ImagePicker.launchCameraAsync({
+                allowsEditing: true,
+                aspect: [1, 1],
+                quality: 1,
+            });
+
+            if (!result.canceled) {
+                const imageUri = result.assets[0].uri;
+                console.log(`Image captured: ${imageUri}`);
+                setStationData(prevData => {
+                    const newData = {
+                        ...prevData,
+                        [stationId]: {
+                            ...prevData[stationId],
+                            image: imageUri
+                        }
+                    };
+                    console.log('Updated station data with new image:', newData);
+                    return newData;
                 });
-
-                if (!result.canceled) {
-                    const imageUri = result.assets[0].uri;
-                    const name = imageUri.split('/').pop();
-                    const type = result.assets[0].type || 'image/jpeg';
-                    const info = await FileSystem.getInfoAsync(imageUri);
-                    const sizeInMB = (info.size / (1024 * 1024)).toFixed(2) + ' MB';
-
-                    setImages([...images, {uri: imageUri, name, size: sizeInMB, type}]);
-                }
-            } catch (e) {
-                console.error(e);
+            } else {
+                console.log('Image capture cancelled');
             }
-        };
+        } catch (e) {
+            console.error('Error uploading image:', e);
+        }
+    };
 
-        useEffect(() => {
-            navigation.setOptions({title: zoneName});
-            console.log(zoneId);
-        }, [navigation, zoneName]);
+    const handleCommentChange = (stationId, text) => {
+        console.log(`Updating comment for station ID: ${stationId}`);
+        setStationData(prevData => {
+            const newData = {
+                ...prevData,
+                [stationId]: {
+                    ...prevData[stationId],
+                    comment: text
+                }
+            };
+            console.log('Updated station data with new comment:', newData);
+            return newData;
+        });
+    };
 
-        const handleSubmit = async () => {
-        };
+    const handleSubmit = () => {
+        console.log('Preparing data for submission');
+        const selectedStationsData = Object.entries(selectedStations)
+            .filter(([_, isSelected]) => isSelected)
+            .map(([stationId, _]) => ({
+                id: stationId,
+                ...stationData[stationId]
+            }));
 
-        return (
-            <SafeAreaView className="h-full flex-1 bg-white">
-                <ScrollView>
-                    <Modal isVisible={isModalVisible}>
-                        <View className="p-6 space-y-8 bg-white items-center rounded-2xl justify-between">
-                            <View className="w-full" style={{gap: 20}}>
-                                <Text className="text-xl text-center font-extrabold">Ajouter un poste de nettoyage</Text>
-                                <View className="space-y-4">
-                                    <FormField title="Nom du poste" value={cleaningStationName}
-                                               handleChangeText={setCleaningStationName}/>
-                                </View>
-                            </View>
-                            <View className="flex-row space-x-2 items-end">
-                                <TouchableOpacity
-                                    className="border-primary justify-center border-2 h-14 items-center w-1/2 rounded-2xl"
-                                    onPress={toggleModal}
-                                >
-                                    <Text className="text-primary text-[16px] font-semibold">Annuler</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    onPress={() => createCleaningStation()}
-                                    className="bg-primary justify-center items-center h-14 w-1/2 rounded-2xl">
-                                    <Text className="text-white text-[16px] font-semibold">Confirmer</Text>
-                                </TouchableOpacity>
-                            </View>
+        if (selectedStationsData.length === 0) {
+            Toast.show({
+                type: 'error',
+                text1: 'Veuillez sélectionner au moins une station.',
+            });
+            return;
+        }
+
+        console.log('Data being sent:', { stations: selectedStationsData });
+        navigation.navigate('Nettoyage', {
+            zoneId,
+            zoneName,
+            stations: selectedStationsData
+        });
+        console.log('Navigated to Nettoyage screen');
+    };
+
+
+    return (
+        <SafeAreaView style={styles.container}>
+            <ScrollView style={styles.scrollView}>
+                <Modal isVisible={isModalVisible}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Ajouter un poste de nettoyage</Text>
+                        <View style={styles.modalForm}>
+                            <FormField
+                                title="Nom du poste"
+                                value={cleaningStationName}
+                                handleChangeText={setCleaningStationName}
+                            />
                         </View>
-                    </Modal>
-
-                    <Modal isVisible={isEditModalVisible}>
-                        <View className="p-6 space-y-8 bg-white items-center rounded-2xl justify-between">
-                            <View className="w-full" style={{gap: 20}}>
-                                <Text className="text-xl text-center font-extrabold">Modifier un poste de nettoyage</Text>
-                                <View className="space-y-4">
-                                    <FormField title="Nom du poste" value={cleaningStationName}
-                                               handleChangeText={setCleaningStationName}/>
-                                </View>
-                            </View>
-                            <View className="flex-row space-x-2 items-end">
-                                <TouchableOpacity
-                                    className="border-primary justify-center border-2 h-14 items-center w-1/2 rounded-2xl"
-                                    onPress={toggleEditModal}
-                                >
-                                    <Text className="text-primary text-[16px] font-semibold">Annuler</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    onPress={() => updateCleaningStation(editStationId)} // Pass stationId here
-                                    className="bg-primary justify-center items-center h-14 w-1/2 rounded-2xl">
-                                    <Text className="text-white text-[16px] font-semibold">Confirmer</Text>
-                                </TouchableOpacity>
-                            </View>
+                        <View style={styles.modalActions}>
+                            <TouchableOpacity
+                                style={styles.modalCancelButton}
+                                onPress={() => setIsModalVisible(false)}
+                            >
+                                <Text style={styles.modalCancelButtonText}>Annuler</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.modalConfirmButton}
+                                onPress={createCleaningStation}
+                            >
+                                <Text style={styles.modalConfirmButtonText}>Confirmer</Text>
+                            </TouchableOpacity>
                         </View>
-                    </Modal>
+                    </View>
+                </Modal>
 
-                    <Modal isVisible={isCommentModalVisible}>
-                        <View className="p-6 space-y-8 bg-white items-center rounded-2xl justify-between">
-                            <View className="w-full" style={{gap: 20}}>
-                                <Text className="text-xl text-center font-extrabold">Ajouter un commentaire</Text>
-                                <View className="space-y-4">
+                <Modal isVisible={isEditModalVisible}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Modifier un poste de nettoyage</Text>
+                        <View style={styles.modalForm}>
+                            <FormField
+                                title="Nom du poste"
+                                value={cleaningStationName}
+                                handleChangeText={setCleaningStationName}
+                            />
+                        </View>
+                        <View style={styles.modalActions}>
+                            <TouchableOpacity
+                                style={styles.modalCancelButton}
+                                onPress={() => setIsEditModalVisible(false)}
+                            >
+                                <Text style={styles.modalCancelButtonText}>Annuler</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.modalConfirmButton}
+                                onPress={() => updateCleaningStation(editStationId)}
+                            >
+                                <Text style={styles.modalConfirmButtonText}>Confirmer</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </Modal>
+
+                <Modal isVisible={isCommentModalVisible}>
+                    <View style={styles.modalContent}>
+                        <Text style={styles.modalTitle}>Ajouter un commentaire</Text>
+                        <View style={styles.modalForm}>
+                            <FormField
+                                title="Commentaire"
+                                value={comment}
+                                handleChangeText={setComment}
+                                multiline={2}
+                            />
+                        </View>
+                        <View style={styles.modalActions}>
+                            <TouchableOpacity
+                                style={styles.modalCancelButton}
+                                onPress={() => setIsCommentModalVisible(false)}
+                            >
+                                <Text style={styles.modalCancelButtonText}>Annuler</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={styles.modalConfirmButton}
+                                onPress={() => {
+                                    // Here you would add logic to save the comment
+                                    setIsCommentModalVisible(false);
+                                }}
+                            >
+                                <Text style={styles.modalConfirmButtonText}>Confirmer</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </Modal>
+
+                <View style={styles.content}>
+                    {cleaningStations.map((station, index) => (
+                        <View key={index} style={styles.stationContainer}>
+                            <TouchableOpacity
+                                onPress={() => handlePress(station.id)}
+                                style={[
+                                    styles.stationButton,
+                                    selectedStations[station.id] && styles.selectedStationButton
+                                ]}
+                            >
+                                <Text style={[
+                                    styles.stationName,
+                                    selectedStations[station.id] && styles.selectedStationName
+                                ]}>{station.name}</Text>
+                                {selectedStations[station.id] ? (
+                                    <View style={styles.actionIcons}>
+                                        <TouchableOpacity onPress={() => uploadImage(station.id)}>
+                                            <FontAwesome name="camera" size={22} color="white" />
+                                        </TouchableOpacity>
+                                        <TouchableOpacity onPress={() => setIsCommentModalVisible(true)}>
+                                            <Ionicons name="chatbubble" size={22} color="white" />
+                                        </TouchableOpacity>
+                                    </View>
+                                ) : (
+                                    <View style={styles.actionIcons}>
+                                        <TouchableOpacity onPress={() => {
+                                            setCleaningStationName(station.name);
+                                            setEditStationId(station.id);
+                                            setIsEditModalVisible(true);
+                                        }}>
+                                            <MaterialIcons name="edit" size={22} color="#008170" />
+                                        </TouchableOpacity>
+                                        <TouchableOpacity onPress={() => deleteCleaningZone(station.id)}>
+                                            <MaterialIcons name="cancel" size={22} color="#008170" />
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+                            </TouchableOpacity>
+                            {selectedStations[station.id] && (
+                                <View style={styles.commentSection}>
                                     <FormField
                                         title="Commentaire"
-                                        value={comment}
-                                        handleChangeText={setComment}
+                                        value={stationData[station.id]?.comment || ''}
+                                        handleChangeText={(text) => handleCommentChange(station.id, text)}
                                         multiline={2}
                                     />
-                                </View>
-                            </View>
-                            <View className="flex-row space-x-2 items-end">
-                                <TouchableOpacity
-                                    className="border-primary justify-center border-2 h-14 items-center w-1/2 rounded-2xl"
-                                    onPress={toggleModal}
-                                >
-                                    <Text className="text-primary text-[16px] font-semibold">Annuler</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity
-                                    onPress={() => createCleaningStation()}
-                                    className="bg-primary justify-center items-center h-14 w-1/2 rounded-2xl">
-                                    <Text className="text-white text-[16px] font-semibold">Confirmer</Text>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    </Modal>
-
-
-                    <View className="w-full flex-1 px-4 my-6 h-full justify-between flex-col">
-                        <View className="space-y-4 w-full">
-                            {cleaningStations.map((station, index) => (
-                                <TouchableOpacity
-                                    key={index}
-                                    onPress={() => handlePress(station.id, station.name)}
-                                    className={`${selectedStations[station.id] ? 'bg-[#494A50]' : 'bg-secondary-200'} flex-row w-full p-6 rounded-2xl justify-between items-center`}>
-                                    <Text
-                                        className={`text-xl font-bold ${selectedStations[station.id] ? 'text-white' : ' '}`}>{station.name}</Text>
-                                    {selectedStations[station.id] ? (
-                                        <View className="flex-row space-x-2">
-                                            <TouchableOpacity onPress={() => uploadImages()}>
-                                                <FontAwesome name="camera" size={22} color="white"/>
-                                            </TouchableOpacity>
-                                            <TouchableOpacity onPress={() => toggleCommentModal()}>
-                                                <Ionicons name="chatbubble" size={22} color="white"/>
-                                            </TouchableOpacity>
-                                        </View>
-                                    ) : (
-                                        <View className="flex-row space-x-2">
-                                            <TouchableOpacity onPress={() => {
-                                                setCleaningStationName(station.name);
-                                                setEditStationId(station.id); // Set stationId for editing
-                                                toggleEditModal();
-                                            }}>
-                                                <MaterialIcons name="edit" size={22} color="#008170"/>
-                                            </TouchableOpacity>
-                                            <TouchableOpacity
-                                                onPress={() => deleteCleaningZone(station.id)}
-                                            >
-                                                <MaterialIcons name="cancel" size={22} color="#008170"/>
-                                            </TouchableOpacity>
-                                        </View>
+                                    {stationData[station.id]?.image && (
+                                        <Image
+                                            source={{uri: stationData[station.id].image}}
+                                            style={styles.stationImage}
+                                        />
                                     )}
-                                </TouchableOpacity>
-                            ))}
-                            <View className="my-6">
-                                <CustomButton title="+ Ajouter un poste de nettoyage" handlePress={toggleModal}
-                                              icon="plus"/>
-                            </View>
+                                </View>
+                            )}
                         </View>
+                    ))}
+                    <View style={styles.addButtonContainer}>
+                        <CustomButton
+                            title="+ Ajouter un poste de nettoyage"
+                            handlePress={() => setIsModalVisible(true)}
+                            icon="plus"
+                        />
                     </View>
-                    <View className="  bottom-0 w-full px-4 my- justify-center flex-row space-x-2">
-                        <TouchableOpacity
-                            className="border-primary justify-center border-2 h-14 items-center w-1/2 rounded-2xl"
-                        >
-                            <Text className="text-primary text-[16px] font-semibold">Annuler</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity className="bg-primary justify-center items-center h-14 w-1/2 rounded-2xl">
-                            <Text className="text-white text-[16px] font-semibold">Confirmer</Text>
-                        </TouchableOpacity>
-                    </View>
-                </ScrollView>
-            </SafeAreaView>
-        );
-    }
-;
+                </View>
+            </ScrollView>
+            <View style={styles.topButtonsContainer}>
+                <TouchableOpacity
+                    style={styles.cancelButton}
+                    onPress={() => navigation.goBack()}
+                >
+                    <Text style={styles.cancelButtonText}>Annuler</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={styles.confirmButton}
+                    onPress={handleSubmit}
+                >
+                    <Text style={styles.confirmButtonText}>Confirmer</Text>
+                </TouchableOpacity>
+            </View>
+        </SafeAreaView>
+    );
+}
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: 'white',
+    },
+    topButtonsContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingHorizontal: width * 0.04,
+        paddingVertical: height * 0.02,
+        borderBottomWidth: 1,
+        borderBottomColor: '#E5E5E5',
+    },
+    scrollView: {
+        flex: 1,
+    },
+    content: {
+        paddingHorizontal: width * 0.04,
+        paddingVertical: height * 0.03,
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        padding: width * 0.06,
+        borderRadius: 20,
+    },
+    modalTitle: {
+        fontSize: width * 0.05,
+        fontWeight: '800',
+        textAlign: 'center',
+        marginBottom: height * 0.02,
+    },
+    modalForm: {
+        marginBottom: height * 0.03,
+    },
+    modalActions: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    modalCancelButton: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: height * 0.06,
+        width: '48%',
+        borderRadius: 16,
+        borderWidth: 2,
+        borderColor: '#008170',
+    },
+    modalCancelButtonText: {
+        color: '#008170',
+        fontSize: width * 0.04,
+        fontWeight: '600',
+    },
+    modalConfirmButton: {
+        backgroundColor: '#008170',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: height * 0.06,
+        width: '48%',
+        borderRadius: 16,
+    },
+    modalConfirmButtonText: {
+        color: 'white',
+        fontSize: width * 0.04,
+        fontWeight: '600',
+    },
+    stationContainer: {
+        marginBottom: height * 0.02,
+    },
+    stationButton: {
+        flexDirection: 'row',
+        width: '100%',
+        padding: width * 0.04,
+        borderRadius: 16,
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: '#F5F5F5',
+    },
+    selectedStationButton: {
+        backgroundColor: '#494A50',
+    },
+    stationName: {
+        fontSize: width * 0.045,
+        fontWeight: '700',
+    },
+    selectedStationName: {
+        color: 'white',
+    },
+    actionIcons: {
+        flexDirection: 'row',
+        gap: width * 0.02,
+    },
+    commentSection: {
+        marginTop: height * 0.01,
+        padding: width * 0.04,
+        backgroundColor: '#F5F5F5',
+        borderRadius: 8,
+    },
+    stationImage: {
+        width: width * 0.25,
+        height: width * 0.25,
+        marginTop: height * 0.01,
+    },
+    addButtonContainer: {
+        marginVertical: height * 0.03,
+    },
+    cancelButton: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: height * 0.05,
+        width: '48%',
+        borderRadius: 16,
+        borderWidth: 2,
+        borderColor: '#008170',
+    },
+    cancelButtonText: {
+        color: '#008170',
+        fontSize: width * 0.04,
+        fontWeight: '600',
+    },
+    confirmButton: {
+        backgroundColor: '#008170',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: height * 0.05,
+        width: '48%',
+        borderRadius: 16,
+    },
+    confirmButtonText: {
+        color: 'white',
+        fontSize: width * 0.04,
+        fontWeight: '600',
+    },
+});
 
 export default ListePostes;

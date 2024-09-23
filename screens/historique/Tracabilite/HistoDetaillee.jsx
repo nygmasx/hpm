@@ -1,10 +1,9 @@
 import React, {useContext, useEffect, useState} from 'react';
-import {View, StyleSheet, Dimensions, FlatList, Text, Image} from "react-native";
-
-import axiosConfig from "../../../helpers/axiosConfig";
+import {FlatList, Image, StyleSheet, Text, View} from "react-native";
 import {AuthContext} from "../../../context/AuthProvider";
+import axiosConfig from "../../../helpers/axiosConfig";
 
-const HistoSimplifiee = () => {
+const HistoDetaillee = ({navigation, route}) => {
 
     const [tracabilities, setTracabilities] = useState()
     const [loading, setLoading] = useState(true);
@@ -21,6 +20,7 @@ const HistoSimplifiee = () => {
             } finally {
                 setLoading(false);
             }
+            console.log(tracabilities)
         };
 
         loadTracabilities();
@@ -29,7 +29,7 @@ const HistoSimplifiee = () => {
 
     const fetchTracabilities = async (userId) => {
         try {
-            const response = await axiosConfig.get(`/user/${userId}/simple-tracability`);
+            const response = await axiosConfig.get(`/user/${userId}/advanced-tracability`);
             const tracabilities = response.data;
 
             // Group tracabilities by month
@@ -63,6 +63,8 @@ const HistoSimplifiee = () => {
     const renderTracabilityItem = ({ item }) => (
         <View style={styles.tracabilityItem}>
             <Text style={styles.tracabilityDate}>Produits ouverts le: {formatDate(item.opened_at)}</Text>
+            <Text style={styles.tracabilityDate}>Service : {item.service}</Text>
+            <Text style={styles.tracabilityDate}>Service : {item.service}</Text>
             {item.images && item.images.length > 0 && (
                 <FlatList
                     data={item.images}
@@ -70,6 +72,17 @@ const HistoSimplifiee = () => {
                     keyExtractor={(img, index) => `${item.id}-img-${index}`}
                     horizontal
                 />
+            )}
+            {item.products && item.products.length > 0 && (
+                <View style={styles.productsContainer}>
+                    <Text style={styles.productsTitle}>Produits:</Text>
+                    {item.products.map(product => (
+                        <Text key={product.id} style={styles.productItem}>
+                            {product.name} {product.brand ? `(${product.brand})` : ''}
+                            - Quantité : {product.pivot.quantity}
+                        </Text>
+                    ))}
+                </View>
             )}
         </View>
     );
@@ -143,4 +156,5 @@ const styles = StyleSheet.create({
         marginTop: 10,
     },
 });
-export default HistoSimplifiee;
+
+export default HistoDetaillee;
