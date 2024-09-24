@@ -33,6 +33,7 @@ import HistoriqueTracabilite from "./screens/historique/Tracabilite/HistoriqueTr
 import HistoSimplifiee from "./screens/historique/Tracabilite/HistoSimplifiee";
 import DetailBac from "./screens/huile/DetailBac";
 import HistoDetaillee from "./screens/historique/Tracabilite/HistoDetaillee";
+import HistoriqueTemperature from "./screens/historique/Temperature/HistoriqueTemperature";
 
 const TabIcon = ({color, icon, name, focused}) => {
     return (
@@ -110,6 +111,7 @@ export default function App() {
                         <Stack.Screen name="Historique Tracabilite" component={HistoriqueTracabilite} options={{title: "Historique de traçabilité"}}/>
                         <Stack.Screen name="Historique Tracabilité Simplifiée" component={HistoSimplifiee} options={{title: "Historique de traçabilité simplifiée"}}/>
                         <Stack.Screen name="Historique Tracabilité Détaillée" component={HistoDetaillee} options={{title: "Historique de traçabilité détaillée"}}/>
+                        <Stack.Screen name="Historique Température" component={HistoriqueTemperature} options={{title: "Historique des relevés de températures"}}/>
                     </Stack.Navigator>
                 </NavigationContainer>
             ) : (
