@@ -9,6 +9,7 @@ const CustomCounter = ({
                            increaseButtonBackgroundColor = '#008170',
                            decreaseButtonBackgroundColor = '#008170',
                            textInputStyle,
+                           type
                        }) => {
     const [count, setCount] = useState(initial);
 
@@ -39,7 +40,7 @@ const CustomCounter = ({
 
             <TextInput
                 style={[styles.textInput, textInputStyle]}
-                value={String(count + " °C")}
+                value={`${count}${type === "degree" ? " °C" : ""}`}
                 editable={false}
                 keyboardType="numeric"
             />

@@ -1,105 +1,259 @@
-import React from 'react';
+import React, { useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import {
     SafeAreaView,
     ScrollView,
     Text,
     TextInput,
-    TouchableOpacity,
     View,
     StyleSheet,
-    KeyboardAvoidingView
+    KeyboardAvoidingView,
+    Dimensions,
+    Platform
 } from "react-native";
 import FormField from "../../components/FormField";
 import DateTimeField from "../../components/DateTimeField";
-import {AntDesign, FontAwesome} from "@expo/vector-icons";
-import PictureModal from "../../components/PictureModal";
 import CustomButton from "../../components/CustomButton";
-import {Chip, Searchbar} from "react-native-paper";
-import RNPickerSelect from 'react-native-picker-select';
-import {SelectList} from "react-native-dropdown-select-list";
+import { Chip } from "react-native-paper";
+import { SelectList } from "react-native-dropdown-select-list";
+import axiosConfig from "../../helpers/axiosConfig";
+import { AuthContext } from "../../context/AuthProvider";
+import Toast from "react-native-toast-message";
 
-const NouvelleReception = ({navigation}) => {
+const { width, height } = Dimensions.get('window');
 
-    const data = [
-        {key: '1', value: 'Mobiles', disabled: true},
-        {key: '2', value: 'Appliances'},
-        {key: '3', value: 'Cameras'},
-        {key: '4', value: 'Computers', disabled: true},
-        {key: '5', value: 'Vegetables'},
-        {key: '6', value: 'Diary Products'},
-        {key: '7', value: 'Drinks'},
-    ]
+const NouvelleReception = ({ navigation }) => {
+    const [formData, setFormData] = useState({
+        reference: '',
+        deliveryDate: new Date(),
+        selectedSupplier: null,
+        selectedService: null,
+        additionalInfo: '',
+    });
+    const [suppliers, setSuppliers] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const { user, token } = useContext(AuthContext);
+
+    const serviceOptions = useMemo(() => ['Matin', 'Midi', 'Soir', 'Indifférent'], []);
+
+    const fetchUserSuppliers = useCallback(() => {
+        setIsLoading(true);
+        axiosConfig.get(`/user/${user.id}/suppliers`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
+            .then(response => {
+                setSuppliers(response.data.map(supplier => ({
+                    key: supplier.id.toString(),
+                    value: supplier.name
+                })));
+            })
+            .catch(error => {
+                console.error("Error fetching suppliers:", error);
+                Toast.show({
+                    type: 'error',
+                    text1: 'Erreur lors de la récupération des fournisseurs',
+                    text2: 'Veuillez réessayer plus tard',
+                });
+            })
+            .finally(() => setIsLoading(false));
+    }, [user.id, token]);
+
+    useEffect(() => {
+        fetchUserSuppliers();
+    }, [fetchUserSuppliers]);
+
+    const handleInputChange = useCallback((field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    }, []);
+
+    const renderChips = useCallback(() => (
+        serviceOptions.map((service) => (
+            <Chip
+                key={service}
+                style={[
+                    styles.chip,
+                    formData.selectedService === service && styles.selectedChip
+                ]}
+                textStyle={[
+                    styles.chipText,
+                    formData.selectedService === service && styles.selectedChipText
+                ]}
+                onPress={() => handleInputChange('selectedService', service)}
+            >
+                {service}
+            </Chip>
+        ))
+    ), [serviceOptions, formData.selectedService, handleInputChange]);
+
+    const handleSubmit = useCallback(() => {
+        if (!formData.reference || !formData.deliveryDate || !formData.selectedSupplier || !formData.selectedService) {
+            Toast.show({
+                type: 'error',
+                text1: 'Veuillez remplir tous les champs obligatoires',
+            });
+        } else {
+            navigation.navigate('Reception Produit', {
+                formData: {
+                    ...formData,
+                    deliveryDate: formData.deliveryDate.toISOString().slice(0, 19).replace('T', ' '),
+                }
+            });
+        }
+    }, [formData, navigation]);
 
     return (
-        <SafeAreaView className="bg-white flex-1 h-full">
-            <ScrollView style={{height: "100%"}} >
-                <View className="w-full flex-1 px-4 my-6 h-full justify-between flex-col space-y-4">
-                    <View className="flex-row items-center">
-                        <View className="space-y-2">
-                            <Text className="font-bold text-lg">Référence Bon de Livraison / Facture</Text>
-                            <View className="flex-row w-full items-center space-x-4">
-                                <View
-                                    className="border-[1px] border-secondary w-5/6 h-16 px-4 rounded-[12px] focus:border-primary items-center flex-row">
-                                    <TextInput
-                                        className="flex-1 font-medium text-[18px] h-full w-full"
-                                        placeholderTextColor="#7b7b8b"
-                                    />
+        <SafeAreaView style={styles.container}>
+            <KeyboardAvoidingView
+                style={styles.keyboardAvoidingView}
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                keyboardVerticalOffset={120}
+            >
+                <ScrollView style={styles.scrollView}>
+                    <View style={styles.content}>
+                        <View style={styles.referenceContainer}>
+                            <View style={styles.referenceContent}>
+                                <Text style={styles.sectionTitle}>Référence Bon de Livraison / Facture</Text>
+                                <View style={styles.referenceInputContainer}>
+                                    <View style={styles.referenceInput}>
+                                        <TextInput
+                                            style={styles.input}
+                                            placeholderTextColor="#7b7b8b"
+                                            value={formData.reference}
+                                            onChangeText={(text) => handleInputChange('reference', text)}
+                                        />
+                                    </View>
                                 </View>
-                                <TouchableOpacity
-                                    className="bg-primary rounded-full items-center justify-center w-[45px] h-[45px]">
-                                    <FontAwesome name="camera" size={22} color="white"/>
-                                </TouchableOpacity>
                             </View>
                         </View>
-                    </View>
-                    <View>
-                        <DateTimeField title="Date de livraison"/>
-                    </View>
-                    <View style={{gap: 10}}>
-                        <Text className="font-bold text-lg">Fournisseur</Text>
-                        <SelectList
-                            setSelected={(value) => console.log(value)}
-                            data={data}
-                            boxStyles={styles.select}
-                            style
-                            placeholder="Choisir un fournisseur"
+                        <View style={styles.dateContainer}>
+                            <DateTimeField
+                                title="Date de livraison"
+                                value={formData.deliveryDate}
+                                onChange={(date) => handleInputChange('deliveryDate', date)}
+                            />
+                        </View>
+                        <View style={styles.supplierContainer}>
+                            <Text style={styles.sectionTitle}>Fournisseur</Text>
+                            <SelectList
+                                setSelected={(value) => handleInputChange('selectedSupplier', value)}
+                                data={suppliers}
+                                save="key"
+                                boxStyles={styles.select}
+                                placeholder="Choisir un fournisseur"
+                                search={true}
+                                loading={isLoading}
+                            />
+                        </View>
+                        <View style={styles.serviceContainer}>
+                            <Text style={styles.sectionTitle}>Durant quel service ?</Text>
+                            <View style={styles.chipContainer}>
+                                {renderChips()}
+                            </View>
+                        </View>
+                        <FormField
+                            title="Informations complémentaires"
+                            value={formData.additionalInfo}
+                            handleChangeText={(text) => handleInputChange('additionalInfo', text)}
                         />
                     </View>
-                    <View className="space-y-4">
-                        <Text className="font-bold text-lg">Durant quel service ?</Text>
-                        <View className="flex-row" style={{gap: 10}}>
-                            <Chip className="rounded-2xl bg-[#EAF2FF]"
-                                  textStyle={{color: "#008170", textTransform: "uppercase"}}>Matin</Chip>
-                            <Chip className="rounded-2xl bg-[#EAF2FF]"
-                                  textStyle={{color: "#008170", textTransform: "uppercase"}}>Midi</Chip>
-                            <Chip className="rounded-2xl bg-[#EAF2FF]"
-                                  textStyle={{color: "#008170", textTransform: "uppercase"}}>Soir</Chip>
-                            <Chip className="rounded-2xl bg-[#EAF2FF]"
-                                  textStyle={{color: "#008170", textTransform: "uppercase"}}>Indifférent</Chip>
-                        </View>
-                    </View>
-                    <KeyboardAvoidingView style={{flex: 1}} behavior={"position"} keyboardVerticalOffset={120}>
-                        <View>
-                            <FormField title="Informations complémentaires"/>
-                        </View>
-                    </KeyboardAvoidingView>
+                </ScrollView>
+                <View style={styles.buttonContainer}>
+                    <CustomButton
+                        title="Valider la saisie"
+                        handlePress={handleSubmit}
+                        isLoading={isLoading}
+                    />
                 </View>
-            </ScrollView>
-            <View className="absolute bottom-0 w-full px-4 my-12">
-                <CustomButton title="Valider la saisie" handlePress={() => navigation.navigate('Reception Produit')}/>
-            </View>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: 'white',
+    },
+    keyboardAvoidingView: {
+        flex: 1,
+    },
+    scrollView: {
+        flex: 1,
+    },
+    content: {
+        paddingHorizontal: width * 0.04,
+        paddingVertical: height * 0.03,
+    },
+    referenceContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: height * 0.02,
+    },
+    referenceContent: {
+        flex: 1,
+    },
+    sectionTitle: {
+        fontWeight: 'bold',
+        fontSize: width * 0.045,
+        marginBottom: height * 0.01,
+    },
+    referenceInputContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    referenceInput: {
+        borderWidth: 1,
+        borderColor: '#C5C6CC',
+        width: '100%',
+        height: height * 0.07,
+        paddingHorizontal: width * 0.04,
+        borderRadius: 12,
+        justifyContent: 'center',
+    },
+    input: {
+        flex: 1,
+        fontWeight: '500',
+        fontSize: width * 0.045,
+    },
+    dateContainer: {
+        marginBottom: height * 0.02,
+    },
+    supplierContainer: {
+        marginBottom: height * 0.02,
+    },
     select: {
         width: "100%",
-        paddingVertical: 20,
+        paddingVertical: height * 0.025,
         borderStyle: "solid",
         borderRadius: 12,
         borderColor: "#C5C6CC",
-    }
-})
+    },
+    serviceContainer: {
+        marginBottom: height * 0.02,
+    },
+    chipContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: width * 0.02,
+    },
+    chip: {
+        borderRadius: 16,
+        backgroundColor: '#EAF2FF',
+    },
+    selectedChip: {
+        backgroundColor: '#008170',
+    },
+    chipText: {
+        color: '#008170',
+        textTransform: 'uppercase',
+    },
+    selectedChipText: {
+        color: 'white',
+    },
+    buttonContainer: {
+        paddingHorizontal: width * 0.04,
+        paddingBottom: height * 0.05,
+    },
+});
 
-export default NouvelleReception;
+export default React.memo(NouvelleReception);

@@ -21,7 +21,7 @@ const Nettoyage = () => {
     const [checkedZones, setCheckedZones] = useState({});
     const [selectedStations, setSelectedStations] = useState({});
     const [selectedDate, setSelectedDate] = useState(new Date());
-    const { user } = useContext(AuthContext);
+    const { user, token } = useContext(AuthContext);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const route = useRoute();
     const navigation = useNavigation();
@@ -46,12 +46,18 @@ const Nettoyage = () => {
     }, [route.params]);
 
     const fetchUserCleaningZones = () => {
-        axiosConfig.get(`/user/${user.id}/cleaning-zones`, {})
+        axiosConfig.get(`/user/${user.id}/cleaning-zones`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        })
             .then(response => {
                 setCleaningZones(response.data);
             })
             .catch(error => {
                 console.error(error);
+                Toast.show({
+                    type: 'error',
+                    text1: 'Erreur lors de la récupération des zones de nettoyage',
+                });
             });
     };
 
@@ -84,7 +90,12 @@ const Nettoyage = () => {
         formData.append('name', cleaningZoneName);
 
         try {
-            await axiosConfig.post('/cleaning-zone/new', formData);
+            axiosConfig.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
+            await axiosConfig.post('/cleaning-zone/new', formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
             await fetchUserCleaningZones();
             setIsModalVisible(false);
             Toast.show({
@@ -149,7 +160,9 @@ const Nettoyage = () => {
 
         try {
             setIsLoading(true);
-            const response = await axiosConfig.post('/cleaning-plan/new', data);
+            const response = await axiosConfig.post('/cleaning-plan/new', data, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             console.log('Cleaning plan created successfully:', response.data);
             Toast.show({
                 type: 'success',

@@ -4,6 +4,7 @@ import { AuthContext } from "../../../context/AuthProvider";
 import axiosConfig from "../../../helpers/axiosConfig";
 
 const HistoriqueTemperature = () => {
+
     const [temperatures, setTemperatures] = useState({});
     const [loading, setLoading] = useState(true);
     const { user } = useContext(AuthContext);
@@ -87,7 +88,7 @@ const HistoriqueTemperature = () => {
     };
 
     if (loading) {
-        return <ActivityIndicator size="large" color="#0000ff" />;
+        return <ActivityIndicator size="large" color="green" />;
     }
 
     return (

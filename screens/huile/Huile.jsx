@@ -18,6 +18,7 @@ import FormField from "../../components/FormField";
 import axiosConfig from "../../helpers/axiosConfig";
 import Toast from "react-native-toast-message";
 import {AuthContext} from "../../context/AuthProvider";
+import * as ImageManipulator from "expo-image-manipulator";
 
 const Huile = ({navigation, route}) => {
 
@@ -108,6 +109,15 @@ const Huile = ({navigation, route}) => {
         });
     };
 
+    const resizeImage = async (uri) => {
+        const manipResult = await ImageManipulator.manipulateAsync(
+            uri,
+            [{resize: {width: 1080}}],
+            {compress: 0.8, format: ImageManipulator.SaveFormat.JPEG}
+        );
+        return manipResult;
+    };
+
     const sendAllData = async () => {
         if (selectedTrays.length === 0) {
             Alert.alert("Aucun bac à huile sélectionné", "Veuillez sélectionner au moins un bac à huile avant de soumettre.", [{text: "OK"}]);
@@ -120,11 +130,13 @@ const Huile = ({navigation, route}) => {
             const formData = new FormData();
             formData.append('date', new Date().toISOString().slice(0, 19).replace('T', ' '));
 
-            selectedTrays.forEach((tray, trayIndex) => {
+            for (let trayIndex = 0; trayIndex < selectedTrays.length; trayIndex++) {
+                const tray = selectedTrays[trayIndex];
                 if (tray.image) {
+                    const resizedImage = await resizeImage(tray.image.uri);
                     formData.append(`oil_trays[${trayIndex}][image]`, {
-                        uri: tray.image.uri,
-                        name: tray.image.name,
+                        uri: resizedImage.uri,
+                        name: 'image.jpg',
                         type: 'image/jpeg',
                     });
                 }
@@ -133,7 +145,7 @@ const Huile = ({navigation, route}) => {
                 formData.append(`oil_trays[${trayIndex}][corrective_action]`, tray.correctiveAction);
                 formData.append(`oil_trays[${trayIndex}][temperature]`, tray.temperature);
                 formData.append(`oil_trays[${trayIndex}][polarity]`, tray.polarity);
-            });
+            }
 
             axiosConfig.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
             const response = await axiosConfig.post('/oil-control/new', formData, {

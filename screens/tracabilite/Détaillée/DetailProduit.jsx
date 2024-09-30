@@ -43,7 +43,7 @@ const DetailProduit = ({navigation}) => {
     };
 
     const handleSubmit = async () => {
-        const productData    = {
+        const productData= {
             productId,
             productName,
             dlc: dlc.toISOString().replace('T', ' ').slice(0, 19),

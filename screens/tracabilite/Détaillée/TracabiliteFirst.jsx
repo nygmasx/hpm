@@ -74,7 +74,10 @@ const TracabiliteFirst = ({navigation, route}) => {
             await axiosConfig.post('/product/new', formData);
             await fetchUserProducts()
             setIsModalVisible(!isModalVisible)
-            showToast()
+            Toast.show({
+                type: 'success',
+                text1: 'Produit ajouté 🟢',
+            });
         } catch (error) {
             console.error(error.response?.data || error.message);
         } finally {
