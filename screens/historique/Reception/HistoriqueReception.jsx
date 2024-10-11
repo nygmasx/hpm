@@ -6,6 +6,7 @@ import axiosConfig from "../../../helpers/axiosConfig";
 const HistoriqueReception = () => {
     const [receptions, setReceptions] = useState({});
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const { user } = useContext(AuthContext);
 
     useEffect(() => {
@@ -15,6 +16,7 @@ const HistoriqueReception = () => {
                 setReceptions(data);
             } catch (error) {
                 console.error('Error loading receptions:', error);
+                setError(error.message);
             } finally {
                 setLoading(false);
             }
@@ -26,9 +28,13 @@ const HistoriqueReception = () => {
     const fetchReceptions = async (userId) => {
         try {
             const response = await axiosConfig.get(`/user/${userId}/receptions`);
-            const receptions = response.data;
+            console.log('API Response:', response.data); // Log the entire response
 
-            return receptions.reduce((acc, reception) => {
+            if (!Array.isArray(response.data)) {
+                throw new Error('API did not return an array of receptions');
+            }
+
+            return response.data.reduce((acc, reception) => {
                 const date = new Date(reception.date);
                 const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 
@@ -61,7 +67,7 @@ const HistoriqueReception = () => {
             <Text style={styles.receptionReference}>Référence: {reception.reference}</Text>
             <Text style={styles.receptionDate}>Date: {formatDate(reception.date)}</Text>
             <Text style={styles.receptionService}>Service: {reception.service}</Text>
-            <Text style={styles.receptionNonCompliance}>Non-conformité: {reception.non_compliance_reason}</Text>
+            <Text style={styles.receptionNonCompliance}>Non-conformité: {reception.non_compliance_reason || 'Aucune'}</Text>
             {reception.non_compliance_picture && (
                 <Image
                     source={{ uri: `https://apimobile.testingtest.fr/storage/non_compliance_pictures/${reception.non_compliance_picture}` }}
@@ -101,15 +107,27 @@ const HistoriqueReception = () => {
         );
     }
 
+    if (error) {
+        return (
+            <SafeAreaView style={styles.errorContainer}>
+                <Text style={styles.errorText}>Error: {error}</Text>
+            </SafeAreaView>
+        );
+    }
+
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollViewContent}>
-                <FlatList
-                    data={Object.keys(receptions).sort().reverse()}
-                    renderItem={renderMonthItem}
-                    keyExtractor={(item) => item}
-                    scrollEnabled={false}
-                />
+                {Object.keys(receptions).length > 0 ? (
+                    <FlatList
+                        data={Object.keys(receptions).sort().reverse()}
+                        renderItem={renderMonthItem}
+                        keyExtractor={(item) => item}
+                        scrollEnabled={false}
+                    />
+                ) : (
+                    <Text style={styles.noReceptions}>Aucune réception trouvée</Text>
+                )}
             </ScrollView>
         </SafeAreaView>
     );

@@ -8,7 +8,8 @@ import {
     StyleSheet,
     KeyboardAvoidingView,
     Dimensions,
-    Platform
+    Platform,
+    TouchableOpacity
 } from "react-native";
 import FormField from "../../components/FormField";
 import DateTimeField from "../../components/DateTimeField";
@@ -18,6 +19,7 @@ import { SelectList } from "react-native-dropdown-select-list";
 import axiosConfig from "../../helpers/axiosConfig";
 import { AuthContext } from "../../context/AuthProvider";
 import Toast from "react-native-toast-message";
+import Modal from "react-native-modal";
 
 const { width, height } = Dimensions.get('window');
 
@@ -31,6 +33,8 @@ const NouvelleReception = ({ navigation }) => {
     });
     const [suppliers, setSuppliers] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [isSupplierModalVisible, setIsSupplierModalVisible] = useState(false);
+    const [supplierName, setSupplierName] = useState('');
     const { user, token } = useContext(AuthContext);
 
     const serviceOptions = useMemo(() => ['Matin', 'Midi', 'Soir', 'Indifférent'], []);
@@ -100,12 +104,55 @@ const NouvelleReception = ({ navigation }) => {
         }
     }, [formData, navigation]);
 
+    const sendSupplierData = async () => {
+        setIsLoading(true)
+        const formData = new FormData();
+        formData.append('name', supplierName)
+
+        try {
+            axiosConfig.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
+            await axiosConfig.post('/supplier/new', formData);
+            await fetchUserSuppliers()
+            setIsSupplierModalVisible(!isSupplierModalVisible)
+            Toast.show({
+                type: 'success',
+                text1: 'Fournisseur ajouté 🟢',
+            });
+        } catch (error) {
+            console.error(error.response?.data || error.message);
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+    const toggleModal = () => {
+        setIsSupplierModalVisible(!isSupplierModalVisible)
+    }
+
     return (
         <SafeAreaView style={styles.container}>
+            <Modal isVisible={isSupplierModalVisible}>
+                <View style={styles.modalContent}>
+                    <View style={styles.modalHeader}>
+                        <Text style={styles.modalTitle}>Ajouter un fournisseur</Text>
+                        <View style={styles.formField}>
+                            <FormField title="Nom du fournisseur" value={supplierName} handleChangeText={setSupplierName} />
+                        </View>
+                    </View>
+                    <View style={styles.modalButtons}>
+                        <TouchableOpacity style={styles.cancelButton} onPress={toggleModal}>
+                            <Text style={styles.cancelButtonText}>Annuler</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.confirmButton} onPress={sendSupplierData}>
+                            <Text style={styles.confirmButtonText}>Confirmer</Text>
+                        </TouchableOpacity>
+                    </View>
+                </View>
+            </Modal>
             <KeyboardAvoidingView
                 style={styles.keyboardAvoidingView}
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
-                keyboardVerticalOffset={120}
+                keyboardVerticalOffset={50}
             >
                 <ScrollView style={styles.scrollView}>
                     <View style={styles.content}>
@@ -132,7 +179,12 @@ const NouvelleReception = ({ navigation }) => {
                             />
                         </View>
                         <View style={styles.supplierContainer}>
-                            <Text style={styles.sectionTitle}>Fournisseur</Text>
+                            <View style={styles.sectionHeader}>
+                                <Text style={styles.sectionTitle}>Fournisseur</Text>
+                                <TouchableOpacity onPress={toggleModal} style={styles.addButton}>
+                                    <Text style={{fontSize: 20, color: "#008170"}}>+</Text>
+                                </TouchableOpacity>
+                            </View>
                             <SelectList
                                 setSelected={(value) => handleInputChange('selectedSupplier', value)}
                                 data={suppliers}
@@ -220,6 +272,7 @@ const styles = StyleSheet.create({
     },
     supplierContainer: {
         marginBottom: height * 0.02,
+        gap: 2,
     },
     select: {
         width: "100%",
@@ -253,6 +306,72 @@ const styles = StyleSheet.create({
     buttonContainer: {
         paddingHorizontal: width * 0.04,
         paddingBottom: height * 0.05,
+    },
+    equipmentSection: {
+        marginTop: height * 0.04,
+        justifyContent: "center",
+        alignItems: 'center'
+    },
+    sectionHeader: {
+        flexDirection: 'row',
+        alignItems: "baseline",
+        gap: 10,
+        marginBottom: height * 0.005,
+    },
+    addButton: {
+        padding: 5,
+    },
+    modalContent: {
+        padding: width * 0.06,
+        backgroundColor: 'white',
+        borderRadius: 20,
+        alignItems: 'center',
+        justifyContent: 'space-between',
+    },
+    modalHeader: {
+        width: '100%',
+        marginBottom: height * 0.04,
+    },
+    modalTitle: {
+        fontSize: width * 0.05,
+        fontWeight: '800',
+        textAlign: 'center',
+        marginBottom: height * 0.02,
+    },
+    formField: {
+        marginTop: height * 0.02,
+    },
+    modalButtons: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
+    },
+    cancelButton: {
+        borderColor: '#008170',
+        borderWidth: 2,
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: height * 0.06,
+        width: '48%',
+        borderRadius: 16,
+    },
+    cancelButtonText: {
+        color: '#008170',
+        fontSize: width * 0.04,
+        fontWeight: '600',
+    },
+    confirmButton: {
+        backgroundColor: '#008170',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: height * 0.06,
+        width: '48%',
+        borderRadius: 16,
+    },
+    confirmButtonText: {
+        color: 'white',
+        fontSize: width * 0.04,
+        fontWeight: '600',
     },
 });
 
