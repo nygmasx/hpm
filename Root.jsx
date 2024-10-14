@@ -37,6 +37,7 @@ import HistoriqueTemperature from "./screens/historique/Temperature/HistoriqueTe
 import HistoriqueNettoyage from "./screens/historique/Nettoyage/HistoriqueNettoyage";
 import HistoriqueHuile from "./screens/historique/Huile/HistoriqueHuile";
 import HistoriqueReception from "./screens/historique/Reception/HistoriqueReception";
+import TestNotif from "./screens/TestNotif";
 
 const TabIcon = ({color, icon, name, focused}) => {
     return (
@@ -57,7 +58,6 @@ export default function App() {
     const {user, setUser} = useContext(AuthContext)
 
     useEffect(() => {
-        // check si l'user est connecté ou pas
         SecureStore.getItemAsync('user')
             .then(userString => {
                 if (userString) {
@@ -180,6 +180,11 @@ const TabNavigator = () => {
             <Tab.Screen name="Paramètres" component={Settings} options={{
                 tabBarIcon: ({color, focused}) => (
                     <TabIcon icon={icons.settings} color={color} name="Paramètres"/>
+                ), headerShown: true
+            }}/>
+            <Tab.Screen name="Notif" component={TestNotif} options={{
+                tabBarIcon: ({color, focused}) => (
+                    <TabIcon icon={icons.settings} color={color} name="Notif"/>
                 ), headerShown: true
             }}/>
         </Tab.Navigator>
