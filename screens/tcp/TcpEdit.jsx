@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { SafeAreaView, StyleSheet, Text, View, ScrollView, Alert, Dimensions } from "react-native";
 import { AntDesign, FontAwesome } from "@expo/vector-icons";
 import CustomButton from "../../components/CustomButton";
@@ -10,17 +10,53 @@ import { AuthContext } from "../../context/AuthProvider";
 
 const { width, height } = Dimensions.get('window');
 
-const TcpOperation = ({ route, navigation }) => {
+const TcpEdit = ({ route, navigation }) => {
     const { user } = useContext(AuthContext);
+    const [tcp, setTcp] = useState(null);
     const [showEndProcess, setShowEndProcess] = useState(false);
-    const [startTemp, setStartTemp] = useState(operationType === 'Refroidissement' ? 0 : 63);
-    const [endTemp, setEndTemp] = useState(operationType === 'Refroidissement' ? 0 : 63);
+    const [startTemp, setStartTemp] = useState(0);
+    const [endTemp, setEndTemp] = useState(0);
     const [selectedAction, setSelectedAction] = useState(null);
     const [startDateTime, setStartDateTime] = useState('');
     const [endDateTime, setEndDateTime] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [selectedProducts, setSelectedProducts] = useState([]);
+    const [operationType, setOperationType] = useState('');
+    const [additionalInfo, setAdditionalInfo] = useState('');
 
-    const { selectedProducts, operationType, additionalInfo } = route.params;
+    const { id } = route.params;
+
+    useEffect(() => {
+        fetchTcpData();
+    }, [id]);
+
+    const fetchTcpData = async () => {
+        try {
+            const response = await axiosConfig.get(`/tcp/${id}`);
+            const tcpData = response.data;
+            setTcp(tcpData);
+            setOperationType(tcpData.operation_type);
+            setStartTemp(parseInt(tcpData.start_temperature));
+            setEndTemp(parseInt(tcpData.end_temperature));
+            setStartDateTime(tcpData.start_date);
+            setEndDateTime(tcpData.end_date);
+            setShowEndProcess(!!tcpData.end_date);
+            setSelectedProducts(tcpData.products.map(product => ({
+                productId: product.id,
+                productName: product.name
+            })));
+            setAdditionalInfo(tcpData.additional_informations || '');
+            setSelectedAction(getActionIndex(tcpData.corrective_action));
+        } catch (error) {
+            console.error('Error fetching TCP data:', error);
+            Alert.alert('Erreur', 'Impossible de récupérer les données du TCP');
+        }
+    };
+
+    const getActionIndex = (action) => {
+        const actions = ['Opération prolongée', 'Produit jeté', 'Réduction durée de vie produit'];
+        return actions.indexOf(action);
+    };
 
     const renderTempControl = (temp, setTemp, isEndTemp = false, startTemp = 63) => (
         <CounterInput
@@ -29,7 +65,7 @@ const TcpOperation = ({ route, navigation }) => {
             decreaseButtonBackgroundColor="#008170"
             className="w-full rounded-xl h-16 border-[1px] border-secondary shadow-none"
             min={operationType === 'Refroidissement' ? undefined : 0}
-            initial={operationType === 'Refroidissement' ? 0 : 63}
+            initial={temp}
             value={temp}
             onChange={(counter) => setTemp(counter)}
             reverseCounterButtons
@@ -116,18 +152,18 @@ const TcpOperation = ({ route, navigation }) => {
             console.log('Submitting data:', JSON.stringify(data, null, 2));
 
             axiosConfig.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
-            const response = await axiosConfig.post('/tcp/new', data, {
+            const response = await axiosConfig.put(`/temperatures-changement/${id}/edit`, data, {
                 headers: {
                     'Content-Type': 'application/json',
                 }
             });
 
             console.log('Response:', response.data);
-            Alert.alert('Succès', 'Tcp créé avec succès');
-            navigation.navigate('Tcp', { newTcpCreated: true });
+            Alert.alert('Succès', 'Tcp modifié avec succès');
+            navigation.navigate('Tcp', { tcpUpdated: true });
         } catch (error) {
-            console.error('Error creating TCP:', error);
-            let errorMessage = 'Une erreur est survenue lors de la création du TCP';
+            console.error('Error updating TCP:', error);
+            let errorMessage = 'Une erreur est survenue lors de la modification du TCP';
             if (error.response) {
                 console.error('Error response:', error.response.data);
                 errorMessage = error.response.data.message || errorMessage;
@@ -139,6 +175,14 @@ const TcpOperation = ({ route, navigation }) => {
             setIsLoading(false);
         }
     };
+
+    if (!tcp) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <Text>Chargement...</Text>
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -160,6 +204,7 @@ const TcpOperation = ({ route, navigation }) => {
                     <DateTimeField
                         title="Date et heure de début"
                         onChange={handleStartDateTimeChange}
+                        initialValue={startDateTime}
                     />
                 </View>
 
@@ -186,6 +231,7 @@ const TcpOperation = ({ route, navigation }) => {
                             <DateTimeField
                                 title="Date et heure de fin"
                                 onChange={handleEndDateTimeChange}
+                                initialValue={endDateTime}
                             />
                         </View>
 
@@ -224,7 +270,7 @@ const TcpOperation = ({ route, navigation }) => {
 
             <View style={styles.buttonContainer}>
                 <CustomButton
-                    title="Enregistrer"
+                    title="Mettre à jour"
                     handlePress={handleSubmit}
                     isLoading={isLoading}
                 />
@@ -309,4 +355,4 @@ const styles = StyleSheet.create({
     },
 });
 
-export default TcpOperation;
+export default TcpEdit;

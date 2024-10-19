@@ -68,7 +68,7 @@ const DetailProduit = ({navigation}) => {
                     increaseButtonBackgroundColor="#008170"
                     decreaseButtonBackgroundColor="#008170"
                     className="w-full rounded-xl h-16 border-[1px] border-secondary shadow-none"
-                    min="0"
+                    min={5}
                     value={quantity}
                     onChange={(counter) => setQuantity(counter)}
                     reverseCounterButtons

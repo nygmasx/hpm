@@ -19,7 +19,7 @@ const Home = ({ navigation, route }) => {
                     <LinkModal image={backgrounds.nettoyage} title="Plan de nettoyage" navigation={navigation} route={"Nettoyage"}/>
                     <LinkModal image={backgrounds.reception} title="Réception" navigation={navigation} route={"Reception"}/>
                     <LinkModal image={backgrounds.huile} title="Huiles" navigation={navigation} route={"Huile"}/>
-                    <LinkModal image={backgrounds.tcp} title="T°C Produit" navigation={navigation} route={"TcProduit"}/>
+                    <LinkModal image={backgrounds.tcp} title="T°C Produit" navigation={navigation} route={"Tcp"}/>
                 </View>
             </ScrollView>
         </SafeAreaView>

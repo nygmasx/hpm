@@ -38,6 +38,8 @@ import HistoriqueNettoyage from "./screens/historique/Nettoyage/HistoriqueNettoy
 import HistoriqueHuile from "./screens/historique/Huile/HistoriqueHuile";
 import HistoriqueReception from "./screens/historique/Reception/HistoriqueReception";
 import TestNotif from "./screens/TestNotif";
+import Tcp from "./screens/tcp/Tcp";
+import tcpEdit from "./screens/tcp/TcpEdit";
 
 const TabIcon = ({color, icon, name, focused}) => {
     return (
@@ -110,6 +112,8 @@ export default function App() {
                         <Stack.Screen name="Nettoyage" component={Nettoyage}/>
                         <Stack.Screen name="Liste Postes" component={ListePostes}/>
                         <Stack.Screen name="TcProduit" component={TcProduit} options={{title: "T°C produit"}}/>
+                        <Stack.Screen name="Tcp" component={Tcp} options={{title: "T°C produit"}}/>
+                        <Stack.Screen name="Modifier Tcp" component={tcpEdit} options={{title: "T°C produit"}}/>
                         <Stack.Screen name="TcpOperation" component={TcpOperation} options={{title: "T°C - Produit"}}/>
                         <Stack.Screen name="Historique Tracabilite" component={HistoriqueTracabilite} options={{title: "Historique de traçabilité"}}/>
                         <Stack.Screen name="Historique Tracabilité Simplifiée" component={HistoSimplifiee} options={{title: "Historique de traçabilité simplifiée"}}/>
