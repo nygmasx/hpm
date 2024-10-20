@@ -1,21 +1,22 @@
-import React, { useState, useContext, useEffect } from 'react';
-import { SafeAreaView, StyleSheet, Text, View, ScrollView, Alert, Dimensions } from "react-native";
-import { AntDesign, FontAwesome } from "@expo/vector-icons";
+import React, {useState, useContext, useEffect} from 'react';
+import {SafeAreaView, StyleSheet, Text, View, ScrollView, Alert, Dimensions} from "react-native";
+import {AntDesign, FontAwesome} from "@expo/vector-icons";
 import CustomButton from "../../components/CustomButton";
 import DateTimeField from "../../components/DateTimeField";
-import { CheckBox } from "@rneui/base";
+import {CheckBox} from "@rneui/base";
 import CounterInput from "react-native-counter-input";
 import axiosConfig from "../../helpers/axiosConfig";
-import { AuthContext } from "../../context/AuthProvider";
+import {AuthContext} from "../../context/AuthProvider";
+import Toast from "react-native-toast-message";
 
-const { width, height } = Dimensions.get('window');
+const {width, height} = Dimensions.get('window');
 
-const TcpEdit = ({ route, navigation }) => {
-    const { user } = useContext(AuthContext);
+const TcpEdit = ({route, navigation}) => {
+    const {user} = useContext(AuthContext);
     const [tcp, setTcp] = useState(null);
     const [showEndProcess, setShowEndProcess] = useState(false);
-    const [startTemp, setStartTemp] = useState(0);
-    const [endTemp, setEndTemp] = useState(0);
+    const [startTemp, setStartTemp] = useState(null);
+    const [endTemp, setEndTemp] = useState(null);
     const [selectedAction, setSelectedAction] = useState(null);
     const [startDateTime, setStartDateTime] = useState('');
     const [endDateTime, setEndDateTime] = useState('');
@@ -24,7 +25,7 @@ const TcpEdit = ({ route, navigation }) => {
     const [operationType, setOperationType] = useState('');
     const [additionalInfo, setAdditionalInfo] = useState('');
 
-    const { id } = route.params;
+    const {id} = route.params;
 
     useEffect(() => {
         fetchTcpData();
@@ -36,8 +37,16 @@ const TcpEdit = ({ route, navigation }) => {
             const tcpData = response.data;
             setTcp(tcpData);
             setOperationType(tcpData.operation_type);
-            setStartTemp(parseInt(tcpData.start_temperature));
-            setEndTemp(parseInt(tcpData.end_temperature));
+
+            const parsedStartTemp = parseInt(tcpData.start_temperature) || 0;
+            const parsedEndTemp = parseInt(tcpData.end_temperature) || 0;
+
+            console.log('Fetched start temperature:', parsedStartTemp);
+            console.log('Fetched end temperature:', parsedEndTemp);
+
+            setStartTemp(parsedStartTemp);
+            setEndTemp(parsedEndTemp);
+
             setStartDateTime(tcpData.start_date);
             setEndDateTime(tcpData.end_date);
             setShowEndProcess(!!tcpData.end_date);
@@ -58,26 +67,32 @@ const TcpEdit = ({ route, navigation }) => {
         return actions.indexOf(action);
     };
 
-    const renderTempControl = (temp, setTemp, isEndTemp = false, startTemp = 63) => (
-        <CounterInput
-            horizontal={true}
-            increaseButtonBackgroundColor="#008170"
-            decreaseButtonBackgroundColor="#008170"
-            className="w-full rounded-xl h-16 border-[1px] border-secondary shadow-none"
-            min={operationType === 'Refroidissement' ? undefined : 0}
-            initial={temp}
-            value={temp}
-            onChange={(counter) => setTemp(counter)}
-            reverseCounterButtons
-            style={[
-                styles.tempControl,
-                (isEndTemp ?
-                        (temp < startTemp && operationType !== 'Refroidissement') :
-                        (temp < 63 && operationType !== 'Refroidissement')
-                ) && styles.tempControlRed
-            ]}
-        />
-    );
+    const renderTempControl = (temp, setTemp, isEndTemp = false) => {
+        console.log(`Rendering ${isEndTemp ? 'end' : 'start'} temp control. Temp:`, temp);
+        return (
+            <CounterInput
+                horizontal={true}
+                increaseButtonBackgroundColor="#008170"
+                decreaseButtonBackgroundColor="#008170"
+                className="w-full rounded-xl h-16 border-[1px] border-secondary shadow-none"
+                min={operationType === 'Liaison froide' || operationType === 'Remise en T°C' ? undefined : 0}
+                initial={temp}
+                value={temp}
+                onChange={(counter) => {
+                    console.log(`${isEndTemp ? 'End' : 'Start'} temp changed to:`, counter);
+                    setTemp(counter);
+                }}
+                reverseCounterButtons
+                style={[
+                    styles.tempControl,
+                    (isEndTemp ?
+                            (temp < startTemp && operationType !== 'Liaison froide' && operationType !== 'Remise en T°C') :
+                            (temp < 63 && operationType !== 'Liaison froide' && operationType !== 'Remise en T°C')
+                    ) && styles.tempControlRed
+                ]}
+            />
+        );
+    };
 
     const handleStartDateTimeChange = (dateTime) => {
         console.log('Start DateTime changed:', dateTime);
@@ -90,7 +105,7 @@ const TcpEdit = ({ route, navigation }) => {
             Alert.alert(
                 "Date de fin invalide",
                 "La date et l'heure de fin doivent être postérieures à la date et l'heure de début.",
-                [{ text: "OK" }]
+                [{text: "OK"}]
             );
         } else {
             setEndDateTime(dateTime);
@@ -102,7 +117,7 @@ const TcpEdit = ({ route, navigation }) => {
             Alert.alert(
                 "Aucun produit sélectionné",
                 "Veuillez sélectionner au moins un produit avant de soumettre.",
-                [{ text: "OK" }]
+                [{text: "OK"}]
             );
             return;
         }
@@ -111,7 +126,7 @@ const TcpEdit = ({ route, navigation }) => {
             Alert.alert(
                 "Date de début invalide",
                 "Veuillez sélectionner une date et heure de début valides.",
-                [{ text: "OK" }]
+                [{text: "OK"}]
             );
             return;
         }
@@ -120,7 +135,7 @@ const TcpEdit = ({ route, navigation }) => {
             Alert.alert(
                 "Date de fin invalide",
                 "La date et l'heure de fin doivent être postérieures à la date et l'heure de début.",
-                [{ text: "OK" }]
+                [{text: "OK"}]
             );
             return;
         }
@@ -135,18 +150,18 @@ const TcpEdit = ({ route, navigation }) => {
                 additional_informations: additionalInfo || '',
                 start_date: startDateTime,
                 start_temperature: startTemp.toString(),
-                is_finished: showEndProcess ? '1' : '0',
-                products: selectedProducts.map(product => ({ product_id: product.productId })),
+                products: selectedProducts.map(product => ({product_id: product.productId})),
             };
 
-            if (showEndProcess) {
-                if (!endDateTime) {
-                    throw new Error("Date de fin invalide");
-                }
+            if (endDateTime && endTemp !== null) {
+                data.is_finished = true;
                 data.end_date = endDateTime;
                 data.end_temperature = endTemp.toString();
-            } else if (selectedAction !== null) {
-                data.corrective_action = ['Opération prolongée', 'Produit jeté', 'Réduction durée de vie produit'][selectedAction];
+            } else {
+                data.is_finished = false;
+                if (selectedAction !== null) {
+                    data.corrective_action = ['Opération prolongée', 'Produit jeté', 'Réduction durée de vie produit'][selectedAction];
+                }
             }
 
             console.log('Submitting data:', JSON.stringify(data, null, 2));
@@ -159,8 +174,11 @@ const TcpEdit = ({ route, navigation }) => {
             });
 
             console.log('Response:', response.data);
-            Alert.alert('Succès', 'Tcp modifié avec succès');
-            navigation.navigate('Tcp', { tcpUpdated: true });
+            Toast.show({
+                type: 'success',
+                text1: 'Tcp modifié avec succès 🟢',
+            });
+            navigation.navigate('Tcp', {tcpUpdated: true});
         } catch (error) {
             console.error('Error updating TCP:', error);
             let errorMessage = 'Une erreur est survenue lors de la modification du TCP';
@@ -175,14 +193,6 @@ const TcpEdit = ({ route, navigation }) => {
             setIsLoading(false);
         }
     };
-
-    if (!tcp) {
-        return (
-            <SafeAreaView style={styles.container}>
-                <Text>Chargement...</Text>
-            </SafeAreaView>
-        );
-    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -210,7 +220,7 @@ const TcpEdit = ({ route, navigation }) => {
 
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Température de début</Text>
-                    {renderTempControl(startTemp, setStartTemp, false)}
+                    {startTemp !== null && renderTempControl(startTemp, setStartTemp, false)}
                 </View>
 
                 <View style={styles.section}>
@@ -237,7 +247,7 @@ const TcpEdit = ({ route, navigation }) => {
 
                         <View style={styles.section}>
                             <Text style={styles.sectionTitle}>Température de fin</Text>
-                            {renderTempControl(endTemp, setEndTemp, true, startTemp)}
+                            {endTemp !== null && renderTempControl(endTemp, setEndTemp, true)}
                         </View>
                     </>
                 )}
@@ -346,9 +356,6 @@ const styles = StyleSheet.create({
     additionalInfo: {
         fontSize: width * 0.035,
         color: '#333',
-    },
-    tempControl: {
-        // Add any additional styles for the temperature control here
     },
     tempControlRed: {
         backgroundColor: '#FFCCCB', // Light red background

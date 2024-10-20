@@ -20,7 +20,7 @@ import Modal from "react-native-modal";
 import Toast from "react-native-toast-message";
 import CheckBox from "expo-checkbox";
 
-const { width, height } = Dimensions.get('window');
+const {width, height} = Dimensions.get('window');
 
 const TracabiliteFirst = ({navigation, route}) => {
 
@@ -33,6 +33,7 @@ const TracabiliteFirst = ({navigation, route}) => {
     const [checkedProducts, setCheckedProducts] = useState({});
     const [selectedService, setSelectedService] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [dateTime, setDateTime] = useState('')
 
     const toggleModal = () => {
         setIsModalVisible(!isModalVisible)
@@ -94,7 +95,7 @@ const TracabiliteFirst = ({navigation, route}) => {
             Alert.alert(
                 "Aucun produit sélectionné",
                 "Veuillez sélectionner au moins un produit avant de soumettre.",
-                [{ text: "OK" }]
+                [{text: "OK"}]
             );
             return;
         }
@@ -106,10 +107,9 @@ const TracabiliteFirst = ({navigation, route}) => {
             const formData = new FormData();
 
             formData.append('user_id', user.id);
-            formData.append('opened_at', new Date().toISOString().slice(0, 19).replace('T', ' '));
-            formData.append('service', selectedService);  // Modify this based on actual service data
+            formData.append('opened_at', dateTime);
+            formData.append('service', selectedService);
 
-            // Append each product's data as separate fields in the FormData
             selectedProducts.forEach((product, productIndex) => {
                 formData.append(`products[${productIndex}][product_id]`, product.productId);
                 formData.append(`products[${productIndex}][expiration_date]`, product.dlc);
@@ -146,7 +146,7 @@ const TracabiliteFirst = ({navigation, route}) => {
 
     const handleCheckboxChange = (productId, productName) => {
         setCheckedProducts(prevState => {
-            const newCheckedProducts = { ...prevState, [productId]: !prevState[productId] };
+            const newCheckedProducts = {...prevState, [productId]: !prevState[productId]};
 
             // Determine if the checkbox was checked or unchecked
             const wasChecked = prevState[productId];
@@ -154,7 +154,7 @@ const TracabiliteFirst = ({navigation, route}) => {
 
             if (isChecked) {
                 // Navigate to product detail if checked
-                navigation.navigate('Détail Produit', { productId, productName });
+                navigation.navigate('Détail Produit', {productId, productName});
             } else {
                 // Uncheck case: Remove the product from selectedProducts
                 setSelectedProducts(prevProducts => {
@@ -164,7 +164,7 @@ const TracabiliteFirst = ({navigation, route}) => {
                     Alert.alert(
                         "Produit retiré",
                         `Le produit ${productName} a été retiré de la sélection.`,
-                        [{ text: "OK" }]
+                        [{text: "OK"}]
                     );
                     console.log('Updated Selected Products:', updatedProducts);
 
@@ -185,6 +185,11 @@ const TracabiliteFirst = ({navigation, route}) => {
         product.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
+    const handleDateTimeChange = (dateTime) => {
+        console.log('DateTime changed:', dateTime);
+        setDateTime(dateTime);
+    };
+
     return (
         <SafeAreaView style={styles.container}>
             <Modal isVisible={isModalVisible}>
@@ -192,7 +197,8 @@ const TracabiliteFirst = ({navigation, route}) => {
                     <View style={styles.modalHeader}>
                         <Text style={styles.modalTitle}>Ajouter un produit</Text>
                         <View style={styles.formField}>
-                            <FormField title="Nom de l'équipement" value={productName} handleChangeText={setProductName} />
+                            <FormField title="Nom de l'équipement" value={productName}
+                                       handleChangeText={setProductName}/>
                         </View>
                     </View>
                     <View style={styles.modalButtons}>
@@ -207,7 +213,7 @@ const TracabiliteFirst = ({navigation, route}) => {
             </Modal>
             <ScrollView style={styles.scrollView}>
                 <View style={styles.content}>
-                    <DateTimeField title="Date d'ouverture du/des produit(s)" />
+                    <DateTimeField onChange={handleDateTimeChange} title="Date d'ouverture du/des produit(s)"/>
                     <View style={styles.serviceSection}>
                         <Text style={styles.sectionTitle}>Durant quel service ?</Text>
                         <View style={styles.chipContainer}>
@@ -239,7 +245,7 @@ const TracabiliteFirst = ({navigation, route}) => {
                                 onChangeText={handleSearch}
                             />
                             <TouchableOpacity style={styles.addButton} onPress={toggleModal}>
-                                <AntDesign name="plus" size={24} color="white" />
+                                <AntDesign name="plus" size={24} color="white"/>
                             </TouchableOpacity>
                         </View>
                         <ScrollView style={styles.productList} contentContainerStyle={styles.productListContent}>
@@ -258,7 +264,7 @@ const TracabiliteFirst = ({navigation, route}) => {
                                 </View>
                             ))}
                         </ScrollView>
-                        <CustomButton title="Valider la saisie" handlePress={sendAllData} isLoading={isLoading} />
+                        <CustomButton title="Valider la saisie" handlePress={sendAllData} isLoading={isLoading}/>
                     </View>
                 </View>
             </ScrollView>

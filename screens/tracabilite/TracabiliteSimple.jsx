@@ -1,21 +1,23 @@
-import React, {useContext, useState} from "react";
-import {SafeAreaView, ScrollView, Text, TouchableOpacity, View} from "react-native";
+import React, { useContext, useState } from "react";
+import { Alert, SafeAreaView, ScrollView, Text, TouchableOpacity, View, StyleSheet, Dimensions } from "react-native";
 import FormField from "../../components/FormField";
 import DateTimeField from "../../components/DateTimeField";
-import {FontAwesome} from '@expo/vector-icons';
+import { FontAwesome } from '@expo/vector-icons';
 import CustomButton from "../../components/CustomButton";
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import PictureModal from "../../components/PictureModal";
 import axiosConfig from "../../helpers/axiosConfig";
-import {AuthContext} from "../../context/AuthProvider";
+import { AuthContext } from "../../context/AuthProvider";
 import Toast from "react-native-toast-message";
 
-const TracabiliteSimple = ({navigation}) => {
+const { width, height } = Dimensions.get('window');
+
+const TracabiliteSimple = ({ navigation }) => {
     const [images, setImages] = useState([]);
-    const [openedAt, setOpenedAt] = useState(new Date());
+    const [openedAt, setOpenedAt] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const {user} = useContext(AuthContext);
+    const { user } = useContext(AuthContext);
 
     const showToast = () => {
         Toast.show({
@@ -26,26 +28,29 @@ const TracabiliteSimple = ({navigation}) => {
     }
 
     const sendData = async () => {
+        if (images.length === 0) {
+            Alert.alert(
+                "Aucun produit photographié",
+                "Veuillez sélectionner au moins un produit avant de soumettre.",
+                [{ text: "OK" }]
+            );
+            return;
+        }
+
         setIsLoading(true);
 
         const formData = new FormData();
-        const formattedOpenedAt = openedAt.toISOString().slice(0, 19).replace('T', ' ');
 
-        formData.append('opened_at', formattedOpenedAt);
+        formData.append('opened_at', openedAt);
 
         images.forEach((image, index) => {
-            console.log(`Image ${index}:`);
-            console.log('URI:', image.uri);
-            console.log('Name:', image.name);
-            console.log('Type:', image.type);
             formData.append(`simple_label_pictures[${index}]`, {
                 uri: image.uri,
-                type: image.type,  // Adjusted to include image type
+                type: image.type,
                 name: image.name,
             });
         });
 
-        console.log(formData)
         try {
             axiosConfig.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
             await axiosConfig.post('/simple-tracking', formData, {
@@ -73,9 +78,8 @@ const TracabiliteSimple = ({navigation}) => {
 
             if (!result.canceled) {
                 const imageUri = result.assets[0].uri;
-
                 const name = imageUri.split('/').pop();
-                const type = result.assets[0].type || 'image/jpeg';  // Adjusted to dynamically set the image type
+                const type = result.assets[0].type || 'image/jpeg';
                 const info = await FileSystem.getInfoAsync(imageUri);
                 const sizeInMB = (info.size / (1024 * 1024)).toFixed(2) + ' MB';
 
@@ -86,34 +90,85 @@ const TracabiliteSimple = ({navigation}) => {
         }
     };
 
+    const handleDateTimeChange = (dateTime) => {
+        console.log('DateTime changed:', dateTime);
+        setOpenedAt(dateTime);
+    };
+
     return (
-        <SafeAreaView className="bg-white flex-1 h-full">
-            <ScrollView style={{height: "100%"}}>
-                <View className="w-full flex-1 px-4 my-6 h-full justify-between flex-col" style={{gap: 20}}>
-                    <DateTimeField title="Date d’ouverture du/des produit(s)"/>
-                    <View style={{gap: 20}}>
-                        <Text className="font-bold text-lg">Photos de l'étiquette</Text>
-                        <View className="items-end">
-                            <TouchableOpacity className="p-2 bg-primary rounded-xl items-center flex-row"
-                                              onPress={uploadImage}>
-                                <FontAwesome name="camera" size={20} color="white"/>
-                                <Text className="text-white font-bold ml-2">Ajouter</Text>
+        <SafeAreaView style={styles.container}>
+            <ScrollView contentContainerStyle={styles.scrollContent}>
+                <View style={styles.content}>
+                    <DateTimeField onChange={handleDateTimeChange} title="Date d'ouverture du/des produit(s)" />
+                    <View style={styles.imageSection}>
+                        <Text style={styles.sectionTitle}>Photos de l'étiquette</Text>
+                        <View style={styles.addPhotoContainer}>
+                            <TouchableOpacity style={styles.addPhotoButton} onPress={uploadImage}>
+                                <FontAwesome name="camera" size={20} color="white" />
+                                <Text style={styles.addPhotoText}>Ajouter</Text>
                             </TouchableOpacity>
                         </View>
-                        <View className="mt-2">
+                        <View style={styles.imageList}>
                             {images.map((image, index) => (
-                                <PictureModal key={index} image={image.uri} imageName={image.name}
-                                              imageSize={image.size}/>
+                                <PictureModal key={index} image={image.uri} imageName={image.name} imageSize={image.size} />
                             ))}
                         </View>
                     </View>
                 </View>
             </ScrollView>
-            <View className="absolute bottom-0 w-full px-4 my-12">
-                <CustomButton title="Valider la saisie" handlePress={sendData} isLoading={isLoading}/>
+            <View style={styles.buttonContainer}>
+                <CustomButton title="Valider la saisie" handlePress={sendData} isLoading={isLoading} />
             </View>
         </SafeAreaView>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: 'white',
+    },
+    scrollContent: {
+        flexGrow: 1,
+        paddingBottom: height * 0.15,
+    },
+    content: {
+        flex: 1,
+        paddingHorizontal: width * 0.04,
+        paddingTop: height * 0.03,
+        gap: height * 0.025,
+    },
+    imageSection: {
+        gap: height * 0.02,
+    },
+    sectionTitle: {
+        fontWeight: 'bold',
+        fontSize: width * 0.045,
+    },
+    addPhotoContainer: {
+        alignItems: 'flex-end',
+    },
+    addPhotoButton: {
+        padding: width * 0.02,
+        backgroundColor: '#008170',
+        borderRadius: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    addPhotoText: {
+        color: 'white',
+        fontWeight: 'bold',
+        marginLeft: width * 0.02,
+    },
+    imageList: {
+        marginTop: height * 0.01,
+    },
+    buttonContainer: {
+        position: 'absolute',
+        bottom: height * 0.05,
+        left: width * 0.04,
+        right: width * 0.04,
+    },
+});
 
 export default TracabiliteSimple;

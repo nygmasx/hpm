@@ -28,16 +28,16 @@ const TcpOperation = ({ route, navigation }) => {
             increaseButtonBackgroundColor="#008170"
             decreaseButtonBackgroundColor="#008170"
             className="w-full rounded-xl h-16 border-[1px] border-secondary shadow-none"
-            min={operationType === 'Refroidissement' ? undefined : 0}
-            initial={operationType === 'Refroidissement' ? 0 : 63}
+            min={operationType === 'Liaison froide' || operationType === 'Remise en T°C' ? undefined : 0}
+            initial={operationType === 'Liaison froide' || operationType === 'Remise en T°C' ? 0 : 63}
             value={temp}
             onChange={(counter) => setTemp(counter)}
             reverseCounterButtons
             style={[
                 styles.tempControl,
                 (isEndTemp ?
-                        (temp < startTemp && operationType !== 'Refroidissement') :
-                        (temp < 63 && operationType !== 'Refroidissement')
+                        (temp < startTemp && operationType !== 'Liaison froide' && operationType !== 'Remise en T°C') :
+                        (temp < 63 && operationType !== 'Liaison froide' && operationType !== 'Remise en T°C')
                 ) && styles.tempControlRed
             ]}
         />
@@ -109,8 +109,11 @@ const TcpOperation = ({ route, navigation }) => {
                 }
                 data.end_date = endDateTime;
                 data.end_temperature = endTemp.toString();
-            } else if (selectedAction !== null) {
-                data.corrective_action = ['Opération prolongée', 'Produit jeté', 'Réduction durée de vie produit'][selectedAction];
+            } else {
+                data.is_finished = '0';  // Set is_finished to false when showEndProcess is false
+                if (selectedAction !== null) {
+                    data.corrective_action = ['Opération prolongée', 'Produit jeté', 'Réduction durée de vie produit'][selectedAction];
+                }
             }
 
             console.log('Submitting data:', JSON.stringify(data, null, 2));

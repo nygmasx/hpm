@@ -23,6 +23,7 @@ import * as ImageManipulator from "expo-image-manipulator";
 const Huile = ({navigation, route}) => {
 
     const [trayName, setTrayName] = useState('')
+    const [date, setDate] = useState('')
     const [checkedOilTrays, setCheckedOilTrays] = useState({});
     const [oilTrays, setOilTrays] = useState([])
     const [selectedTrays, setSelectedTrays] = useState([])
@@ -128,7 +129,7 @@ const Huile = ({navigation, route}) => {
 
         try {
             const formData = new FormData();
-            formData.append('date', new Date().toISOString().slice(0, 19).replace('T', ' '));
+            formData.append('date', date);
 
             for (let trayIndex = 0; trayIndex < selectedTrays.length; trayIndex++) {
                 const tray = selectedTrays[trayIndex];
@@ -170,6 +171,11 @@ const Huile = ({navigation, route}) => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleDateTimeChange = (dateTime) => {
+        console.log('DateTime changed:', dateTime);
+        setDate(dateTime);
     };
 
     const renderItem = ({item}) => (
@@ -226,7 +232,7 @@ const Huile = ({navigation, route}) => {
                 </Modal>
             </View>
             <View className="w-full flex-1 px-4 my-6 h-full flex-col space-y-8">
-                <DateTimeField title="Date du relevé d'huile"/>
+                <DateTimeField onChange={handleDateTimeChange} title="Date du relevé d'huile"/>
                 <View className="space-y-4">
                     <View className="w-full flex-row justify-between items-center">
                         <Text className="font-semibold text-[16px]">Bac à huiles</Text>

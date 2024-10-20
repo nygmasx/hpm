@@ -20,7 +20,7 @@ const Nettoyage = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [checkedZones, setCheckedZones] = useState({});
     const [selectedStations, setSelectedStations] = useState({});
-    const [selectedDate, setSelectedDate] = useState(new Date());
+    const [selectedDate, setSelectedDate] = useState('');
     const { user, token } = useContext(AuthContext);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const route = useRoute();
@@ -152,7 +152,7 @@ const Nettoyage = () => {
         });
 
         const data = {
-            date: selectedDate.toISOString().split('T')[0], // Format date as YYYY-MM-DD
+            date: selectedDate, // Format date as YYYY-MM-DD
             cleaning_zones: cleaningZonesData,
         };
 
@@ -160,8 +160,11 @@ const Nettoyage = () => {
 
         try {
             setIsLoading(true);
+            axiosConfig.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
             const response = await axiosConfig.post('/cleaning-plan/new', data, {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                }
             });
             console.log('Cleaning plan created successfully:', response.data);
             Toast.show({
@@ -178,6 +181,11 @@ const Nettoyage = () => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleDateTimeChange = (dateTime) => {
+        console.log('DateTime changed:', dateTime);
+        setSelectedDate(dateTime);
     };
 
     const renderItem = ({ item }) => (
@@ -233,8 +241,7 @@ const Nettoyage = () => {
             <View style={styles.content}>
                 <DateTimeField
                     title="Date du relevé de température"
-                    value={selectedDate}
-                    onChange={setSelectedDate}
+                    onChange={handleDateTimeChange}
                 />
                 <View style={styles.listContainer}>
                     <View style={styles.listHeader}>

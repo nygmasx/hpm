@@ -186,11 +186,6 @@ const TabNavigator = () => {
                     <TabIcon icon={icons.settings} color={color} name="Paramètres"/>
                 ), headerShown: true
             }}/>
-            <Tab.Screen name="Notif" component={TestNotif} options={{
-                tabBarIcon: ({color, focused}) => (
-                    <TabIcon icon={icons.settings} color={color} name="Notif"/>
-                ), headerShown: true
-            }}/>
         </Tab.Navigator>
     )
 }

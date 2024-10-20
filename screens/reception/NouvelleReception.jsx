@@ -24,9 +24,10 @@ import Modal from "react-native-modal";
 const { width, height } = Dimensions.get('window');
 
 const NouvelleReception = ({ navigation }) => {
+
     const [formData, setFormData] = useState({
         reference: '',
-        deliveryDate: new Date(),
+        deliveryDate: '',
         selectedSupplier: null,
         selectedService: null,
         additionalInfo: '',
@@ -98,7 +99,7 @@ const NouvelleReception = ({ navigation }) => {
             navigation.navigate('Reception Produit', {
                 formData: {
                     ...formData,
-                    deliveryDate: formData.deliveryDate.toISOString().slice(0, 19).replace('T', ' '),
+                    deliveryDate: formData.deliveryDate
                 }
             });
         }
@@ -174,7 +175,6 @@ const NouvelleReception = ({ navigation }) => {
                         <View style={styles.dateContainer}>
                             <DateTimeField
                                 title="Date de livraison"
-                                value={formData.deliveryDate}
                                 onChange={(date) => handleInputChange('deliveryDate', date)}
                             />
                         </View>

@@ -19,7 +19,7 @@ const Temperature = ({navigation}) => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [equipments, setEquipments] = useState([]);
     const [selectedEquipments, setSelectedEquipments] = useState([]);
-    const [date, setDate] = useState(new Date());
+    const [date, setDate] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [equipmentDegree, setEquipmentDegree] = useState()
     const [equipmentName, setEquipmentName] = useState("");
@@ -113,6 +113,8 @@ const Temperature = ({navigation}) => {
         } catch (error) {
             console.error(error.response?.data || error.message);
         } finally {
+            setEquipmentName('')
+            setSelectedType(null)
             setIsLoading(false);
         }
     };
@@ -130,7 +132,7 @@ const Temperature = ({navigation}) => {
 
         // Prepare the data for submission
         const data = {
-            reading_date: date.toISOString().slice(0, 19).replace('T', ' '), // Convert date to ISO string
+            reading_date: date,
             equipments: selectedEquipments.map(equipment => ({
                 equipment_id: equipment.equipment_id,
                 degrees: equipment.degree.toString(), // Ensure degree is a string
@@ -172,7 +174,10 @@ const Temperature = ({navigation}) => {
         }
     };
 
-
+    const handleDateTimeChange = (dateTime) => {
+        console.log('DateTime changed:', dateTime);
+        setDate(dateTime);
+    };
 
     const renderItem = ({ item }) => (
         <View style={styles.equipmentItem}>
@@ -185,21 +190,25 @@ const Temperature = ({navigation}) => {
                 />
                 <Text style={styles.equipmentName}>{item.name}</Text>
             </View>
-            {!item.checked &&
-                <View style={styles.equipmentActions}>
-                    <TouchableOpacity onPress={toggleModal}>
-                        <MaterialIcons name="edit" size={20} color="#008170" />
-                    </TouchableOpacity>
-                    <MaterialIcons name="cancel" size={20} color="#008170" />
-                </View>
-            }
             {item.checked && (
                 <CustomCounter
                     value={item.degree}
                     handleChange={(newDegree) => handleDegreeChange(item.id, newDegree)}
-                    initial={item.type === "Frigo" ? 0 : (item.type === "Congélateur" ? -25 : 0)}
-                    min={item.type === "Frigo" ? 0 : (item.type === "Congélateur" ? -25 : 0)}
-                    max={item.type === "Frigo" ? 4 : (item.type === "Congélateur" ? -18 : 0)}
+                    initial={
+                        item.type === "Frigo" ? 0 :
+                            (item.type === "Congélateur" ? -25 :
+                                (item.type === "Chaud" ? 63 : 0))
+                    }
+                    min={
+                        item.type === "Frigo" ? 0 :
+                            (item.type === "Congélateur" ? -25 :
+                                (item.type === "Chaud" ? 63 : 0))
+                    }
+                    max={
+                        item.type === "Frigo" ? 4 :
+                            (item.type === "Congélateur" ? -18 :
+                                (item.type === "Chaud" ? 100 : 0))
+                    }
                 />
             )}
         </View>
@@ -244,7 +253,7 @@ const Temperature = ({navigation}) => {
                 </View>
             </Modal>
             <View style={styles.content}>
-                <DateTimeField title="Date du relevé de température" />
+                <DateTimeField onChange={handleDateTimeChange} title="Date du relevé de température" />
                 <View style={styles.equipmentSection}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Équipements</Text>
@@ -291,6 +300,7 @@ const styles = StyleSheet.create({
     },
     modalForm: {
         marginVertical: height * 0.02,
+        gap: 10
     },
     typeSelectionTitle: {
         fontWeight: '700',
