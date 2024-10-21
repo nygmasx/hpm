@@ -1,12 +1,28 @@
-import React, { useContext, useEffect, useState } from 'react';
-import {View, Text, FlatList, StyleSheet, ActivityIndicator, SafeAreaView} from "react-native";
-import { AuthContext } from "../../../context/AuthProvider";
+import React, {useContext, useEffect, useState} from 'react';
+import {
+    View,
+    Text,
+    FlatList,
+    StyleSheet,
+    ActivityIndicator,
+    SafeAreaView,
+    Image,
+    TouchableOpacity,
+    Modal,
+    Dimensions
+} from "react-native";
+import { FontAwesome } from "@expo/vector-icons";
+import {AuthContext} from "../../../context/AuthProvider";
 import axiosConfig from "../../../helpers/axiosConfig";
+
+const { width, height } = Dimensions.get('window');
 
 const HistoriqueHuile = () => {
     const [oilControls, setOilControls] = useState({});
     const [loading, setLoading] = useState(true);
-    const { user } = useContext(AuthContext);
+    const {user} = useContext(AuthContext);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null);
 
     useEffect(() => {
         const loadOilControls = async () => {
@@ -47,7 +63,7 @@ const HistoriqueHuile = () => {
         }
     };
 
-    const renderMonthItem = ({ item: month }) => (
+    const renderMonthItem = ({item: month}) => (
         <View style={styles.monthContainer}>
             <Text style={styles.monthTitle}>{formatMonthTitle(month)}</Text>
             <FlatList
@@ -58,7 +74,7 @@ const HistoriqueHuile = () => {
         </View>
     );
 
-    const renderOilControlItem = ({ item: control }) => (
+    const renderOilControlItem = ({item: control}) => (
         <View style={styles.controlContainer}>
             <Text style={styles.controlDate}>Date: {formatDate(control.date)}</Text>
             {control.oil_trays && control.oil_trays.length > 0 ? (
@@ -73,22 +89,41 @@ const HistoriqueHuile = () => {
         </View>
     );
 
-    const renderOilTrayItem = ({ item: tray }) => (
-        <View style={styles.trayContainer}>
-            <Text style={styles.trayName}>{tray.name}</Text>
-            <View style={styles.detailsContainer}>
-                <DetailItem label="Type de contrôle" value={tray.pivot.control_type} />
-                <DetailItem label="Température" value={`${tray.pivot.temperature}°C`} />
-                <DetailItem label="Polarité" value={tray.pivot.polarity} />
-                <DetailItem label="Action corrective" value={tray.pivot.corrective_action} />
-            </View>
-            {tray.pivot.image_url && tray.pivot.image_url !== "0" && (
-                <Text style={styles.trayImage}>Image disponible</Text>
-            )}
-        </View>
-    );
+    const renderOilTrayItem = ({item: tray}) => {
+        const imageUrl = tray.pivot.image_url
+            ? `https://apimobile.testingtest.fr/storage/${tray.pivot.image_url}`
+            : null;
 
-    const DetailItem = ({ label, value }) => (
+        console.log('Tray image URL:', imageUrl);
+
+        return (
+            <View style={styles.trayContainer}>
+                <Text style={styles.trayName}>{tray.name}</Text>
+                <View style={styles.detailsContainer}>
+                    <DetailItem label="Type de contrôle" value={tray.pivot.control_type}/>
+                    <DetailItem label="Température" value={`${tray.pivot.temperature}°C`}/>
+                    <DetailItem label="Polarité" value={tray.pivot.polarity}/>
+                    <DetailItem label="Action corrective" value={tray.pivot.corrective_action}/>
+                </View>
+                {imageUrl && (
+                    <TouchableOpacity
+                        onPress={() => {
+                            setSelectedImage(imageUrl);
+                            setModalVisible(true);
+                        }}
+                    >
+                        <Image
+                            source={{ uri: imageUrl }}
+                            style={styles.trayImage}
+                            onError={(error) => console.error('Image loading error:', error.nativeEvent.error)}
+                        />
+                    </TouchableOpacity>
+                )}
+            </View>
+        );
+    };
+
+    const DetailItem = ({label, value}) => (
         <View style={styles.detailItem}>
             <Text style={styles.detailLabel}>{label}:</Text>
             <Text style={styles.detailValue}>{value}</Text>
@@ -98,7 +133,7 @@ const HistoriqueHuile = () => {
     const formatMonthTitle = (monthYear) => {
         const [year, month] = monthYear.split('-');
         const date = new Date(year, month - 1);
-        return date.toLocaleString('default', { month: 'long', year: 'numeric' });
+        return date.toLocaleString('default', {month: 'long', year: 'numeric'});
     };
 
     const formatDate = (dateString) => {
@@ -106,21 +141,46 @@ const HistoriqueHuile = () => {
     };
 
     if (loading) {
-        return <ActivityIndicator size="large" color="#0000ff" />;
+        return <ActivityIndicator size="large" color="#0000ff"/>;
     }
 
     return (
-        <SafeAreaView>
+        <SafeAreaView style={styles.container}>
             <FlatList
                 data={Object.keys(oilControls).sort().reverse()}
                 renderItem={renderMonthItem}
                 keyExtractor={(item) => item}
             />
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <TouchableOpacity
+                            onPress={() => setModalVisible(false)}
+                            style={styles.closeButton}
+                        >
+                            <FontAwesome name="close" size={24} color="black" />
+                        </TouchableOpacity>
+                        <Image
+                            source={{ uri: selectedImage }}
+                            style={styles.modalImage}
+                            resizeMode="contain"
+                        />
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+    },
     monthContainer: {
         marginBottom: 20,
     },
@@ -174,9 +234,32 @@ const styles = StyleSheet.create({
         fontSize: 14,
     },
     trayImage: {
-        fontSize: 12,
-        color: 'blue',
-        marginTop: 5,
+        width: '100%',
+        height: 200,
+        resizeMode: 'cover',
+        marginTop: 10,
+        borderRadius: 5,
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        borderRadius: 16,
+        padding: width * 0.02,
+        width: width * 0.92,
+        height: height * 0.7,
+    },
+    closeButton: {
+        alignSelf: 'flex-end',
+        marginBottom: height * 0.01,
+    },
+    modalImage: {
+        width: '100%',
+        height: '100%',
     },
 });
 
