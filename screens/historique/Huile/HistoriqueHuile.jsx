@@ -31,7 +31,6 @@ const HistoriqueHuile = () => {
                 setOilControls(data);
             } catch (error) {
                 console.error('Error loading oil controls:', error);
-                // Handle error (e.g., show an error message)
             } finally {
                 setLoading(false);
             }

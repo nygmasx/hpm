@@ -48,10 +48,10 @@ const LoginScreen = () => {
                                     {error && <Text style={styles.errorText}>{error}</Text>}
                                     <FormField placeholder="Email" value={email} handleChangeText={setEmail}/>
                                     <FormField placeholder="Mot de passe" value={password} name="Password" handleChangeText={setPassword}/>
-                                    <TouchableOpacity>
-                                        <Text style={styles.forgotPassword}>Mot de passe oublié ?</Text>
-                                    </TouchableOpacity>
                                 </View>
+                                <TouchableOpacity>
+                                    <Text style={styles.forgotPassword}>Mot de passe oublié ?</Text>
+                                </TouchableOpacity>
                             </View>
                             <View style={styles.buttonContainer}>
                                 <CustomButton
@@ -92,59 +92,56 @@ const styles = StyleSheet.create({
     },
     content: {
         flex: 1,
+        gap: height * 0.04, // Added gap between main content sections
     },
     imageContainer: {
         width: '100%',
-        height: height * 0.3, // 30% of screen height, similar to 300 fixed height
+        height: height * 0.3,
     },
     backgroundImage: {
         height: '100%',
     },
     formContainer: {
         width: '100%',
-        paddingHorizontal: width * 0.04, // 4% of screen width
-        marginTop: height * 0.05, // 5% of screen height
+        paddingHorizontal: width * 0.04,
+        gap: height * 0.02, // Added gap between title and form fields
     },
     title: {
-        fontSize: width * 0.08, // Responsive font size
+        fontSize: width * 0.08,
         fontWeight: '800',
-        marginBottom: height * 0.02, // 2% of screen height
     },
     formFields: {
-        marginTop: height * 0.02, // 2% of screen height
+        gap: height * 0.01, // Added gap between form fields
     },
     errorText: {
         color: 'red',
-        marginBottom: height * 0.01, // 1% of screen height
     },
     forgotPassword: {
         fontSize: 16,
-        color: 'blue', // Assuming 'primary' color is blue, adjust as needed
+        color: '#008170',
         fontWeight: 'bold',
-        marginTop: height * 0.01, // 1% of screen height
     },
     buttonContainer: {
         width: '100%',
-        paddingHorizontal: width * 0.04, // 4% of screen width
-        marginVertical: height * 0.04, // 4% of screen height
+        paddingHorizontal: width * 0.04,
+        gap: height * 0.02,
     },
     signupContainer: {
-        marginTop: height * 0.02, // 2% of screen height
+        gap: height * 0.01,
     },
     signupTextContainer: {
         flexDirection: 'row',
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: height * 0.01, // 1% of screen height
+        gap: width * 0.02,
     },
     signupText: {
         fontSize: 16,
     },
     signupLink: {
         fontSize: 16,
-        color: 'blue', // Assuming 'primary' color is blue, adjust as needed
+        color: '#008170',
         fontWeight: 'bold',
-        marginLeft: width * 0.02, // 2% of screen width
     },
     promoText: {
         textAlign: 'center',
