@@ -1,13 +1,27 @@
-import React, {useContext, useEffect, useState} from 'react';
-import {View, StyleSheet, Dimensions, FlatList, Text, Image} from "react-native";
-
+import React, { useContext, useEffect, useState } from 'react';
+import {
+    View,
+    StyleSheet,
+    Dimensions,
+    FlatList,
+    Text,
+    Image,
+    SafeAreaView,
+    ActivityIndicator,
+    TouchableOpacity,
+    Modal
+} from "react-native";
+import { FontAwesome } from "@expo/vector-icons";
 import axiosConfig from "../../../helpers/axiosConfig";
-import {AuthContext} from "../../../context/AuthProvider";
+import { AuthContext } from "../../../context/AuthProvider";
+
+const { width, height } = Dimensions.get('window');
 
 const HistoSimplifiee = () => {
-
-    const [tracabilities, setTracabilities] = useState()
+    const [tracabilities, setTracabilities] = useState({});
     const [loading, setLoading] = useState(true);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [selectedImage, setSelectedImage] = useState(null);
     const { user } = useContext(AuthContext);
 
     useEffect(() => {
@@ -17,26 +31,20 @@ const HistoSimplifiee = () => {
                 setTracabilities(data);
             } catch (error) {
                 console.error('Error loading tracabilities:', error);
-                // Handle error (e.g., show an error message)
             } finally {
                 setLoading(false);
             }
         };
 
         loadTracabilities();
-        console.log(tracabilities)
     }, [user.id]);
 
     const fetchTracabilities = async (userId) => {
         try {
             const response = await axiosConfig.get(`/user/${userId}/simple-tracability`);
-            const tracabilities = response.data;
-
-            // Group tracabilities by month
-            return tracabilities.reduce((acc, tracability) => {
+            return response.data.reduce((acc, tracability) => {
                 const date = new Date(tracability.created_at);
                 const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-
                 if (!acc[monthYear]) {
                     acc[monthYear] = [];
                 }
@@ -56,62 +64,112 @@ const HistoSimplifiee = () => {
                 data={tracabilities[month]}
                 renderItem={renderTracabilityItem}
                 keyExtractor={(item) => item.id.toString()}
+                scrollEnabled={false}
             />
         </View>
     );
 
     const renderTracabilityItem = ({ item }) => (
         <View style={styles.tracabilityItem}>
-            <Text style={styles.tracabilityDate}>Produits ouverts le: {formatDate(item.opened_at)}</Text>
+            <Text style={styles.tracabilityDate}>
+                Produits ouverts le: {formatDate(item.opened_at)}
+            </Text>
             {item.images && item.images.length > 0 && (
-                <FlatList
-                    data={item.images}
-                    renderItem={renderImageItem}
-                    keyExtractor={(img, index) => `${item.id}-img-${index}`}
-                    horizontal
-                />
+                <View style={styles.imagesContainer}>
+                    <FlatList
+                        data={item.images}
+                        renderItem={renderImageItem}
+                        keyExtractor={(img, index) => `${item.id}-img-${index}`}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.imagesList}
+                    />
+                </View>
             )}
         </View>
     );
 
     const renderImageItem = ({ item }) => {
         const imageUrl = `https://apimobile.testingtest.fr/storage/${item.url}`;
-        console.log('Image URL:', imageUrl);
-
         return (
-            <Image
-                source={{ uri: imageUrl }}
-                style={styles.tracabilityImage}
-                onError={(e) => console.error('Error loading image:', e.nativeEvent.error)}
-                onLoad={() => console.log('Image loaded successfully:', imageUrl)}
-            />
+            <TouchableOpacity
+                onPress={() => {
+                    setSelectedImage(imageUrl);
+                    setModalVisible(true);
+                }}
+                style={styles.imageContainer}
+            >
+                <Image
+                    source={{ uri: imageUrl }}
+                    style={styles.tracabilityImage}
+                    onError={(e) => console.error('Error loading image:', e.nativeEvent.error)}
+                />
+            </TouchableOpacity>
         );
     };
 
     const formatMonthTitle = (monthYear) => {
         const [year, month] = monthYear.split('-');
         const date = new Date(year, month - 1);
-        return date.toLocaleString('default', { month: 'long', year: 'numeric' });
+        return date.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
     };
 
     const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleString();
+        return new Date(dateString).toLocaleString('fr-FR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     };
 
     if (loading) {
-        return <Text>Loading...</Text>;
+        return (
+            <SafeAreaView style={styles.container}>
+                <ActivityIndicator size="large" color="#008170" />
+            </SafeAreaView>
+        );
     }
 
     return (
-        <FlatList
-            data={Object.keys(tracabilities).sort().reverse()}
-            renderItem={renderMonthItem}
-            keyExtractor={(item) => item}
-        />
+        <SafeAreaView style={styles.container}>
+            <FlatList
+                data={Object.keys(tracabilities).sort().reverse()}
+                renderItem={renderMonthItem}
+                keyExtractor={(item) => item}
+            />
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => setModalVisible(false)}
+            >
+                <View style={styles.modalContainer}>
+                    <View style={styles.modalContent}>
+                        <TouchableOpacity
+                            onPress={() => setModalVisible(false)}
+                            style={styles.closeButton}
+                        >
+                            <FontAwesome name="close" size={24} color="black" />
+                        </TouchableOpacity>
+                        <Image
+                            source={{ uri: selectedImage }}
+                            style={styles.modalImage}
+                            resizeMode="contain"
+                        />
+                    </View>
+                </View>
+            </Modal>
+        </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: 'white',
+    },
     monthContainer: {
         marginBottom: 20,
     },
@@ -123,24 +181,74 @@ const styles = StyleSheet.create({
         backgroundColor: '#f0f0f0',
     },
     tracabilityItem: {
-        padding: 10,
+        padding: 15,
         borderBottomWidth: 1,
         borderBottomColor: '#ccc',
+        backgroundColor: '#fff',
+        marginHorizontal: 10,
+        marginBottom: 10,
+        borderRadius: 8,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 3,
     },
     tracabilityDate: {
-        fontSize: 14,
-        color: '#666',
-    },
-    tracabilityId: {
         fontSize: 16,
-        marginTop: 5,
+        color: '#333',
+        fontWeight: '500',
+        marginBottom: 12,
     },
-    tracabilityImage: {
-        width: 100,
-        height: 100,
-        resizeMode: 'cover',
-        marginRight: 10,
+    imagesContainer: {
         marginTop: 10,
     },
+    imagesList: {
+        paddingVertical: 5,
+    },
+    imageContainer: {
+        marginRight: 10,
+        borderRadius: 8,
+        overflow: 'hidden',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 3,
+    },
+    tracabilityImage: {
+        width: 120,
+        height: 120,
+        resizeMode: 'cover',
+        borderRadius: 8,
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        borderRadius: 16,
+        padding: width * 0.02,
+        width: width * 0.92,
+        height: height * 0.7,
+    },
+    closeButton: {
+        alignSelf: 'flex-end',
+        marginBottom: height * 0.01,
+    },
+    modalImage: {
+        width: '100%',
+        height: '100%',
+    },
 });
+
 export default HistoSimplifiee;

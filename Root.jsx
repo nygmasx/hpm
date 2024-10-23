@@ -40,6 +40,7 @@ import HistoriqueReception from "./screens/historique/Reception/HistoriqueRecept
 import TestNotif from "./screens/TestNotif";
 import Tcp from "./screens/tcp/Tcp";
 import tcpEdit from "./screens/tcp/TcpEdit";
+import HistoriqueChangementTemperature from "./screens/historique/Tcp/HistoriqueChangementTemperature";
 
 const TabIcon = ({color, icon, name, focused}) => {
     return (
@@ -122,6 +123,7 @@ export default function App() {
                         <Stack.Screen name="Historique Plan de nettoyage" component={HistoriqueNettoyage} options={{title: "Historique des plans de nettoyage"}}/>
                         <Stack.Screen name="Historique Relevé Huile" component={HistoriqueHuile} options={{title: "Historique des relevés d'huiles"}}/>
                         <Stack.Screen name="Historique Réception" component={HistoriqueReception} options={{title: "Historique des réceptions"}}/>
+                        <Stack.Screen name="Historique Tcp" component={HistoriqueChangementTemperature} options={{title: "Historique T°C produit"}}/>
                     </Stack.Navigator>
                 </NavigationContainer>
             ) : (

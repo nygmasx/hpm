@@ -1,10 +1,19 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from "react-native";
+import {
+    View,
+    Text,
+    FlatList,
+    StyleSheet,
+    ActivityIndicator,
+    SafeAreaView,
+    Dimensions
+} from "react-native";
 import { AuthContext } from "../../../context/AuthProvider";
 import axiosConfig from "../../../helpers/axiosConfig";
 
-const HistoriqueTemperature = () => {
+const { width, height } = Dimensions.get('window');
 
+const HistoriqueTemperature = () => {
     const [temperatures, setTemperatures] = useState({});
     const [loading, setLoading] = useState(true);
     const { user } = useContext(AuthContext);
@@ -16,7 +25,6 @@ const HistoriqueTemperature = () => {
                 setTemperatures(data);
             } catch (error) {
                 console.error('Error loading temperatures:', error);
-                // Handle error (e.g., show an error message)
             } finally {
                 setLoading(false);
             }
@@ -28,14 +36,9 @@ const HistoriqueTemperature = () => {
     const fetchTemperatures = async (userId) => {
         try {
             const response = await axiosConfig.get(`/user/${userId}/temperatures`);
-            const temperatures = response.data;
-            console.log('Fetched temperatures:', temperatures);
-
-            // Group temperatures by month
-            return temperatures.reduce((acc, temperature) => {
+            return response.data.reduce((acc, temperature) => {
                 const date = new Date(temperature.reading_date);
                 const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-
                 if (!acc[monthYear]) {
                     acc[monthYear] = [];
                 }
@@ -48,6 +51,13 @@ const HistoriqueTemperature = () => {
         }
     };
 
+    const DetailItem = ({ label, value }) => (
+        <View style={styles.detailItem}>
+            <Text style={styles.detailLabel}>{label}:</Text>
+            <Text style={styles.detailValue}>{value}</Text>
+        </View>
+    );
+
     const renderMonthItem = ({ item: month }) => (
         <View style={styles.monthContainer}>
             <Text style={styles.monthTitle}>{formatMonthTitle(month)}</Text>
@@ -55,52 +65,97 @@ const HistoriqueTemperature = () => {
                 data={temperatures[month]}
                 renderItem={renderTemperatureItem}
                 keyExtractor={(item) => item.id.toString()}
+                scrollEnabled={false}
             />
         </View>
     );
 
     const renderTemperatureItem = ({ item }) => (
         <View style={styles.temperatureItem}>
-            <Text style={styles.readingDate}>Date: {formatDate(item.reading_date)}</Text>
+            <View style={styles.readingHeader}>
+                <Text style={styles.readingDate}>{formatDate(item.reading_date)}</Text>
+            </View>
             <FlatList
                 data={item.equipments}
                 renderItem={renderEquipmentItem}
                 keyExtractor={(equipment) => equipment.id.toString()}
+                scrollEnabled={false}
             />
         </View>
     );
 
     const renderEquipmentItem = ({ item: equipment }) => (
         <View style={styles.equipmentItem}>
-            <Text style={styles.equipmentName}>{equipment.name} ({equipment.type})</Text>
-            <Text style={styles.temperature}>Température: {equipment.pivot.degree}°C</Text>
+            <View style={styles.equipmentHeader}>
+                <Text style={styles.equipmentName}>{equipment.name}</Text>
+                <Text style={styles.equipmentType}>({equipment.type})</Text>
+            </View>
+            <View style={[
+                styles.temperatureContainer,
+                {
+                    backgroundColor: getTemperatureColor(equipment.pivot.degree),
+                    opacity: 0.9
+                }
+            ]}>
+                <Text style={styles.temperature}>
+                    {equipment.pivot.degree}°C
+                </Text>
+            </View>
         </View>
     );
+
+    const getTemperatureColor = (temperature) => {
+        if (temperature >= 8) return '#ff6b6b'; // too warm - red
+        if (temperature <= 2) return '#4dabf7'; // too cold - blue
+        return '#51cf66'; // good range - green
+    };
 
     const formatMonthTitle = (monthYear) => {
         const [year, month] = monthYear.split('-');
         const date = new Date(year, month - 1);
-        return date.toLocaleString('default', { month: 'long', year: 'numeric' });
+        return date.toLocaleString('fr-FR', { month: 'long', year: 'numeric' });
     };
 
     const formatDate = (dateString) => {
-        return new Date(dateString).toLocaleString();
+        return new Date(dateString).toLocaleString('fr-FR', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     };
 
     if (loading) {
-        return <ActivityIndicator size="large" color="green" />;
+        return (
+            <SafeAreaView style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#008170" />
+            </SafeAreaView>
+        );
     }
 
     return (
-        <FlatList
-            data={Object.keys(temperatures).sort().reverse()}
-            renderItem={renderMonthItem}
-            keyExtractor={(item) => item}
-        />
+        <SafeAreaView style={styles.container}>
+            <FlatList
+                data={Object.keys(temperatures).sort().reverse()}
+                renderItem={renderMonthItem}
+                keyExtractor={(item) => item}
+            />
+        </SafeAreaView>
     );
 };
 
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: 'white',
+    },
+    loadingContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'white',
+    },
     monthContainer: {
         marginBottom: 20,
     },
@@ -112,25 +167,75 @@ const styles = StyleSheet.create({
         backgroundColor: '#f0f0f0',
     },
     temperatureItem: {
-        padding: 10,
-        borderBottomWidth: 1,
-        borderBottomColor: '#ccc',
+        marginHorizontal: 10,
+        marginBottom: 10,
+        backgroundColor: 'white',
+        borderRadius: 8,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 3,
+        overflow: 'hidden',
+    },
+    readingHeader: {
+        backgroundColor: '#008170',
+        padding: 12,
     },
     readingDate: {
         fontSize: 16,
         fontWeight: 'bold',
-        marginBottom: 5,
+        color: 'white',
     },
     equipmentItem: {
-        marginLeft: 10,
-        marginBottom: 5,
+        padding: 12,
+        borderBottomWidth: 1,
+        borderBottomColor: '#f0f0f0',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
+    equipmentHeader: {
+        flex: 1,
     },
     equipmentName: {
-        fontSize: 14,
-        fontWeight: 'bold',
+        fontSize: 15,
+        fontWeight: '600',
+        color: '#333',
+    },
+    equipmentType: {
+        fontSize: 13,
+        color: '#666',
+        marginTop: 2,
+    },
+    temperatureContainer: {
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 16,
+        minWidth: 60,
+        alignItems: 'center',
     },
     temperature: {
         fontSize: 14,
+        fontWeight: 'bold',
+        color: 'white',
+    },
+    detailItem: {
+        flexDirection: 'row',
+        marginBottom: 3,
+    },
+    detailLabel: {
+        fontSize: 14,
+        fontWeight: '600',
+        marginRight: 5,
+        color: '#333',
+    },
+    detailValue: {
+        fontSize: 14,
+        color: '#666',
     },
 });
 

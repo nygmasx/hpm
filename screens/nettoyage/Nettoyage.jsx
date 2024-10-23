@@ -1,18 +1,18 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { Alert, FlatList, SafeAreaView, Text, TouchableOpacity, View, StyleSheet, Dimensions } from "react-native";
+import React, {useContext, useEffect, useState} from 'react';
+import {Alert, FlatList, SafeAreaView, Text, TouchableOpacity, View, StyleSheet, Dimensions} from "react-native";
 import DateTimeField from "../../components/DateTimeField";
-import { AntDesign } from "@expo/vector-icons";
+import {AntDesign} from "@expo/vector-icons";
 import CheckBox from "expo-checkbox";
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import Modal from "react-native-modal";
 import FormField from "../../components/FormField";
 import CustomButton from "../../components/CustomButton";
 import axiosConfig from "../../helpers/axiosConfig";
-import { AuthContext } from "../../context/AuthProvider";
+import {AuthContext} from "../../context/AuthProvider";
 import Toast from "react-native-toast-message";
-import { useRoute, useNavigation } from "@react-navigation/native";
+import {useRoute, useNavigation} from "@react-navigation/native";
 
-const { width, height } = Dimensions.get('window');
+const {width, height} = Dimensions.get('window');
 
 const Nettoyage = () => {
     const [cleaningZones, setCleaningZones] = useState([]);
@@ -21,7 +21,7 @@ const Nettoyage = () => {
     const [checkedZones, setCheckedZones] = useState({});
     const [selectedStations, setSelectedStations] = useState({});
     const [selectedDate, setSelectedDate] = useState('');
-    const { user, token } = useContext(AuthContext);
+    const {user, token} = useContext(AuthContext);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const route = useRoute();
     const navigation = useNavigation();
@@ -47,7 +47,7 @@ const Nettoyage = () => {
 
     const fetchUserCleaningZones = () => {
         axiosConfig.get(`/user/${user.id}/cleaning-zones`, {
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers: {'Authorization': `Bearer ${token}`}
         })
             .then(response => {
                 setCleaningZones(response.data);
@@ -63,20 +63,20 @@ const Nettoyage = () => {
 
     const handleCheckboxChange = (zoneId, zoneName) => {
         setCheckedZones(prevState => {
-            const newCheckedZones = { ...prevState, [zoneId]: !prevState[zoneId] };
+            const newCheckedZones = {...prevState, [zoneId]: !prevState[zoneId]};
 
             if (newCheckedZones[zoneId]) {
-                navigation.navigate('Liste Postes', { zoneId, zoneName });
+                navigation.navigate('Liste Postes', {zoneId, zoneName});
             } else {
                 setSelectedStations(prev => {
-                    const newSelectedStations = { ...prev };
+                    const newSelectedStations = {...prev};
                     delete newSelectedStations[zoneId];
                     return newSelectedStations;
                 });
                 Alert.alert(
                     "Zone retirée",
                     `La zone ${zoneName} a été retirée de la sélection.`,
-                    [{ text: "OK" }]
+                    [{text: "OK"}]
                 );
             }
 
@@ -114,11 +114,7 @@ const Nettoyage = () => {
     };
 
     const handleSubmit = async () => {
-        console.log('Selected Stations:', selectedStations);
-        console.log('Starting submission process');
-
         if (!selectedDate) {
-            console.warn('No date selected');
             Toast.show({
                 type: 'error',
                 text1: 'Veuillez sélectionner une date pour le plan de nettoyage.',
@@ -128,7 +124,6 @@ const Nettoyage = () => {
 
         const selectedZoneIds = Object.keys(checkedZones).filter(id => checkedZones[id]);
         if (selectedZoneIds.length === 0) {
-            console.warn('No zones selected');
             Toast.show({
                 type: 'error',
                 text1: 'Veuillez sélectionner au moins une zone de nettoyage.',
@@ -136,42 +131,63 @@ const Nettoyage = () => {
             return;
         }
 
-        const cleaningZonesData = selectedZoneIds.map(zoneId => {
-            const zoneStations = selectedStations[zoneId];
-            if (!zoneStations || zoneStations.length === 0) {
-                throw new Error(`Aucune station sélectionnée pour la zone ${zoneId}`);
-            }
-            return {
-                cleaning_zone_id: zoneId,
-                cleaning_stations: zoneStations.map(station => ({
-                    station_id: station.id,
-                    comment: station.comment || null,
-                    image_url: station.image || null,
-                })),
-            };
-        });
-
-        const data = {
-            date: selectedDate, // Format date as YYYY-MM-DD
-            cleaning_zones: cleaningZonesData,
-        };
-
-        console.log('Prepared data for submission:', JSON.stringify(data, null, 2));
-
         try {
             setIsLoading(true);
+            const formData = new FormData();
+            formData.append('date', selectedDate);
+
+            // Prepare cleaning zones data
+            const cleaningZonesData = selectedZoneIds.map((zoneId, zoneIndex) => {
+                const zoneStations = selectedStations[zoneId];
+                if (!zoneStations || zoneStations.length === 0) {
+                    throw new Error(`Aucune station sélectionnée pour la zone ${zoneId}`);
+                }
+
+                // Append each station's data
+                zoneStations.forEach((station, stationIndex) => {
+                    if (station.image) {
+                        // Get the file extension from the URI
+                        const uriParts = station.image.split('.');
+                        const fileType = uriParts[uriParts.length - 1];
+
+                        // Create file name
+                        const fileName = `image_${zoneIndex}_${stationIndex}.${fileType}`;
+
+                        // Append the image as a file
+                        formData.append(`cleaning_zones[${zoneIndex}][cleaning_stations][${stationIndex}][image]`, {
+                            uri: station.image,
+                            name: fileName,
+                            type: `image/${fileType}`
+                        });
+                    }
+
+                    // Append other station data
+                    formData.append(`cleaning_zones[${zoneIndex}][cleaning_zone_id]`, zoneId);
+                    formData.append(`cleaning_zones[${zoneIndex}][cleaning_stations][${stationIndex}][station_id]`, station.id);
+                    if (station.comment) {
+                        formData.append(`cleaning_zones[${zoneIndex}][cleaning_stations][${stationIndex}][comment]`, station.comment);
+                    }
+                });
+
+                return {
+                    cleaning_zone_id: zoneId,
+                    cleaning_stations: zoneStations,
+                };
+            });
+
+            // Make the API request
             axiosConfig.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
-            const response = await axiosConfig.post('/cleaning-plan/new', data, {
+            const response = await axiosConfig.post('/cleaning-plan/new', formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 }
             });
-            console.log('Cleaning plan created successfully:', response.data);
+
             Toast.show({
                 type: 'success',
                 text1: 'Plan de nettoyage créé avec succès.',
             });
-            navigation.navigate('Accueil'); // Adjust as needed
+            navigation.navigate('Accueil');
         } catch (error) {
             console.error('Error creating cleaning plan:', error.response?.data || error.message);
             Toast.show({
@@ -188,7 +204,7 @@ const Nettoyage = () => {
         setSelectedDate(dateTime);
     };
 
-    const renderItem = ({ item }) => (
+    const renderItem = ({item}) => (
         <View style={styles.listItem}>
             <View style={styles.listItemLeft}>
                 <CheckBox

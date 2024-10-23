@@ -13,7 +13,7 @@ const History = ({navigation}) => {
                     <LinkModal image={backgrounds.nettoyage} title="Plan de nettoyage" navigation={navigation} route={"Historique Plan de nettoyage"}/>
                     <LinkModal image={backgrounds.reception} title="Réception" navigation={navigation} route={"Historique Réception"}/>
                     <LinkModal image={backgrounds.huile} title="Huiles" navigation={navigation} route={"Historique Relevé Huile"}/>
-                    <LinkModal image={backgrounds.tcp} title="T°C Produit" navigation={navigation} route={"TcProduit"}/>
+                    <LinkModal image={backgrounds.tcp} title="T°C Produit" navigation={navigation} route={"Historique Tcp"}/>
                 </View>
             </ScrollView>
         </SafeAreaView>
