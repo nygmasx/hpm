@@ -64,6 +64,16 @@ const HistoDetaillee = ({ navigation, route }) => {
         </View>
     );
 
+    const renderEmptyState = () => (
+        <View style={styles.emptyContainer}>
+            <FontAwesome name="inbox" size={50} color="#008170" style={styles.emptyIcon} />
+            <Text style={styles.emptyTitle}>Aucune traçabilité détaillée</Text>
+            <Text style={styles.emptyDescription}>
+                Les traçabilités détaillées que vous enregistrerez apparaîtront ici
+            </Text>
+        </View>
+    );
+
     const renderMonthItem = ({ item: month }) => (
         <View style={styles.monthContainer}>
             <Text style={styles.monthTitle}>{formatMonthTitle(month)}</Text>
@@ -83,7 +93,7 @@ const HistoDetaillee = ({ navigation, route }) => {
                 <DetailItem label="Service" value={item.service} />
             </View>
 
-            {item.images && item.images.length > 0 && (
+            {item.images && item.images.length > 0 ? (
                 <View style={styles.imagesContainer}>
                     <Text style={styles.sectionTitle}>Photos:</Text>
                     <FlatList
@@ -94,9 +104,11 @@ const HistoDetaillee = ({ navigation, route }) => {
                         showsHorizontalScrollIndicator={false}
                     />
                 </View>
+            ) : (
+                <Text style={styles.noImagesText}>Aucune photo disponible</Text>
             )}
 
-            {item.products && item.products.length > 0 && (
+            {item.products && item.products.length > 0 ? (
                 <View style={styles.productsContainer}>
                     <Text style={styles.sectionTitle}>Produits:</Text>
                     {item.products.map(product => (
@@ -105,11 +117,13 @@ const HistoDetaillee = ({ navigation, route }) => {
                                 {product.name} {product.brand ? `(${product.brand})` : ''}
                             </Text>
                             <Text style={styles.productQuantity}>
-                                Quantité : {product.pivot.quantity}
+                                Qté: {product.pivot.quantity}
                             </Text>
                         </View>
                     ))}
                 </View>
+            ) : (
+                <Text style={styles.noProductsText}>Aucun produit enregistré</Text>
             )}
         </View>
     );
@@ -158,11 +172,15 @@ const HistoDetaillee = ({ navigation, route }) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <FlatList
-                data={Object.keys(tracabilities).sort().reverse()}
-                renderItem={renderMonthItem}
-                keyExtractor={(item) => item}
-            />
+            {Object.keys(tracabilities).length > 0 ? (
+                <FlatList
+                    data={Object.keys(tracabilities).sort().reverse()}
+                    renderItem={renderMonthItem}
+                    keyExtractor={(item) => item}
+                />
+            ) : (
+                renderEmptyState()
+            )}
             <Modal
                 animationType="slide"
                 transparent={true}
@@ -205,11 +223,21 @@ const styles = StyleSheet.create({
         backgroundColor: '#f0f0f0',
     },
     tracabilityItem: {
-        padding: 10,
+        padding: 15,
         borderBottomWidth: 1,
         borderBottomColor: '#ccc',
-        marginBottom: 10,
         backgroundColor: '#fff',
+        marginHorizontal: 10,
+        marginBottom: 10,
+        borderRadius: 8,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 3,
     },
     detailsContainer: {
         marginBottom: 10,
@@ -223,10 +251,12 @@ const styles = StyleSheet.create({
         fontWeight: '600',
         marginRight: 5,
         color: '#333',
+        width: 140,
     },
     detailValue: {
         fontSize: 14,
         color: '#666',
+        flex: 1,
     },
     sectionTitle: {
         fontSize: 16,
@@ -238,11 +268,11 @@ const styles = StyleSheet.create({
         marginVertical: 10,
     },
     tracabilityImage: {
-        width: 100,
-        height: 100,
+        width: 120,
+        height: 120,
         resizeMode: 'cover',
         marginRight: 10,
-        borderRadius: 5,
+        borderRadius: 8,
     },
     productsContainer: {
         marginTop: 10,
@@ -253,18 +283,59 @@ const styles = StyleSheet.create({
     productItem: {
         backgroundColor: '#f9f9f9',
         padding: 8,
-        borderRadius: 5,
-        marginBottom: 5,
+        borderRadius: 6,
+        marginBottom: 6,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
     productName: {
         fontSize: 14,
         fontWeight: '500',
         color: '#333',
+        flex: 1,
     },
     productQuantity: {
         fontSize: 12,
         color: '#666',
-        marginTop: 2,
+        fontWeight: '500',
+        marginLeft: 8,
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    emptyIcon: {
+        marginBottom: 20,
+        opacity: 0.8,
+    },
+    emptyTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 10,
+    },
+    emptyDescription: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+        lineHeight: 22,
+    },
+    noImagesText: {
+        fontSize: 14,
+        color: '#666',
+        fontStyle: 'italic',
+        textAlign: 'center',
+        marginTop: 10,
+    },
+    noProductsText: {
+        fontSize: 14,
+        color: '#666',
+        fontStyle: 'italic',
+        textAlign: 'center',
+        padding: 10,
     },
     modalContainer: {
         flex: 1,

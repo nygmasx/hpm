@@ -160,11 +160,21 @@ const HistoriqueNettoyage = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <FlatList
-                data={Object.keys(cleaningPlans).sort().reverse()}
-                renderItem={renderMonthItem}
-                keyExtractor={(item) => `month-${item}`}
-            />
+            {Object.keys(cleaningPlans).length > 0 ? (
+                <FlatList
+                    data={Object.keys(cleaningPlans).sort().reverse()}
+                    renderItem={renderMonthItem}
+                    keyExtractor={(item) => `month-${item}`}
+                />
+            ) : (
+                <View style={styles.emptyContainer}>
+                    <FontAwesome name="trash-o" size={50} color="#008170" style={styles.emptyIcon} />
+                    <Text style={styles.emptyTitle}>Aucun plan de nettoyage</Text>
+                    <Text style={styles.emptyDescription}>
+                        Les plans de nettoyage que vous enregistrerez apparaîtront ici
+                    </Text>
+                </View>
+            )}
             <Modal
                 animationType="slide"
                 transparent={true}
@@ -284,6 +294,28 @@ const styles = StyleSheet.create({
         width: '100%',
         height: '100%',
     },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    emptyIcon: {
+        marginBottom: 20,
+        opacity: 0.8,
+    },
+    emptyTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 10,
+    },
+    emptyDescription: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+        lineHeight: 22,
+    }
 });
 
 export default HistoriqueNettoyage;

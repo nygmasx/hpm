@@ -8,6 +8,7 @@ import {
     SafeAreaView,
     Dimensions
 } from "react-native";
+import { FontAwesome } from "@expo/vector-icons";
 import { AuthContext } from "../../../context/AuthProvider";
 import axiosConfig from "../../../helpers/axiosConfig";
 
@@ -51,6 +52,16 @@ const HistoriqueTemperature = () => {
         }
     };
 
+    const renderEmptyState = () => (
+        <View style={styles.emptyContainer}>
+            <FontAwesome name="thermometer-empty" size={50} color="#008170" style={styles.emptyIcon} />
+            <Text style={styles.emptyTitle}>Aucun relevé de température</Text>
+            <Text style={styles.emptyDescription}>
+                Les relevés de température que vous enregistrerez apparaîtront ici
+            </Text>
+        </View>
+    );
+
     const DetailItem = ({ label, value }) => (
         <View style={styles.detailItem}>
             <Text style={styles.detailLabel}>{label}:</Text>
@@ -75,12 +86,16 @@ const HistoriqueTemperature = () => {
             <View style={styles.readingHeader}>
                 <Text style={styles.readingDate}>{formatDate(item.reading_date)}</Text>
             </View>
-            <FlatList
-                data={item.equipments}
-                renderItem={renderEquipmentItem}
-                keyExtractor={(equipment) => equipment.id.toString()}
-                scrollEnabled={false}
-            />
+            {item.equipments && item.equipments.length > 0 ? (
+                <FlatList
+                    data={item.equipments}
+                    renderItem={renderEquipmentItem}
+                    keyExtractor={(equipment) => equipment.id.toString()}
+                    scrollEnabled={false}
+                />
+            ) : (
+                <Text style={styles.noEquipmentText}>Aucun équipement relevé</Text>
+            )}
         </View>
     );
 
@@ -136,11 +151,15 @@ const HistoriqueTemperature = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <FlatList
-                data={Object.keys(temperatures).sort().reverse()}
-                renderItem={renderMonthItem}
-                keyExtractor={(item) => item}
-            />
+            {Object.keys(temperatures).length > 0 ? (
+                <FlatList
+                    data={Object.keys(temperatures).sort().reverse()}
+                    renderItem={renderMonthItem}
+                    keyExtractor={(item) => item}
+                />
+            ) : (
+                renderEmptyState()
+            )}
         </SafeAreaView>
     );
 };
@@ -237,6 +256,35 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#666',
     },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    emptyIcon: {
+        marginBottom: 20,
+        opacity: 0.8,
+    },
+    emptyTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 10,
+    },
+    emptyDescription: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+        lineHeight: 22,
+    },
+    noEquipmentText: {
+        fontSize: 14,
+        color: '#666',
+        fontStyle: 'italic',
+        textAlign: 'center',
+        padding: 15,
+    }
 });
 
 export default HistoriqueTemperature;

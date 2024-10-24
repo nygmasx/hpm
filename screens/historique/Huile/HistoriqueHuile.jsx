@@ -144,12 +144,22 @@ const HistoriqueHuile = () => {
     }
 
     return (
-        <SafeAreaView style={styles.container}>
-            <FlatList
-                data={Object.keys(oilControls).sort().reverse()}
-                renderItem={renderMonthItem}
-                keyExtractor={(item) => item}
-            />
+        <SafeAreaView style={[styles.container, { backgroundColor: 'white' }]}>
+            {Object.keys(oilControls).length > 0 ? (
+                <FlatList
+                    data={Object.keys(oilControls).sort().reverse()}
+                    renderItem={renderMonthItem}
+                    keyExtractor={(item) => item}
+                />
+            ) : (
+                <View style={styles.emptyContainer}>
+                    <FontAwesome name="tint" size={50} color="#008170" style={styles.emptyIcon} />
+                    <Text style={styles.emptyTitle}>Aucun contrôle d'huile</Text>
+                    <Text style={styles.emptyDescription}>
+                        Les contrôles d'huile que vous enregistrerez apparaîtront ici
+                    </Text>
+                </View>
+            )}
             <Modal
                 animationType="slide"
                 transparent={true}
@@ -259,6 +269,28 @@ const styles = StyleSheet.create({
     modalImage: {
         width: '100%',
         height: '100%',
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    emptyIcon: {
+        marginBottom: 20,
+        opacity: 0.8,
+    },
+    emptyTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 10,
+    },
+    emptyDescription: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+        lineHeight: 22,
     },
 });
 

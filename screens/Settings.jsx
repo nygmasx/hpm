@@ -47,17 +47,14 @@ const Settings = ({navigation}) => {
                     <Text style={styles.userName}>{user.name}</Text>
                 </View>
 
-                <SettingsItem title="Modifier mon profil" />
-                <SettingsItem title="Documents" />
                 <SettingsItem
                     title="Confidentialité et sécurité"
                     handlePress={handlePrivacyPress}
                 />
                 <SettingsItem title="Nous contacter - Service client" />
-                <SettingsItem title="Changer la langue" />
                 <SettingsItem title="Mon Abonnement" />
                 <SettingsItem title="Déconnexion" handlePress={logout} />
-                <SettingsItem title="Supprimer mon compte" />
+                <SettingsItem title="Supprimer mon compte"/>
             </ScrollView>
         </SafeAreaView>
     );

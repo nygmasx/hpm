@@ -74,7 +74,7 @@ const HistoSimplifiee = () => {
             <Text style={styles.tracabilityDate}>
                 Produits ouverts le: {formatDate(item.opened_at)}
             </Text>
-            {item.images && item.images.length > 0 && (
+            {item.images && item.images.length > 0 ? (
                 <View style={styles.imagesContainer}>
                     <FlatList
                         data={item.images}
@@ -85,6 +85,8 @@ const HistoSimplifiee = () => {
                         contentContainerStyle={styles.imagesList}
                     />
                 </View>
+            ) : (
+                <Text style={styles.noImagesText}>Aucune photo disponible</Text>
             )}
         </View>
     );
@@ -107,6 +109,16 @@ const HistoSimplifiee = () => {
             </TouchableOpacity>
         );
     };
+
+    const renderEmptyState = () => (
+        <View style={styles.emptyContainer}>
+            <FontAwesome name="inbox" size={50} color="#008170" style={styles.emptyIcon} />
+            <Text style={styles.emptyTitle}>Aucune traçabilité trouvée</Text>
+            <Text style={styles.emptyDescription}>
+                Les traçabilités que vous enregistrerez apparaîtront ici
+            </Text>
+        </View>
+    );
 
     const formatMonthTitle = (monthYear) => {
         const [year, month] = monthYear.split('-');
@@ -134,11 +146,15 @@ const HistoSimplifiee = () => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <FlatList
-                data={Object.keys(tracabilities).sort().reverse()}
-                renderItem={renderMonthItem}
-                keyExtractor={(item) => item}
-            />
+            {Object.keys(tracabilities).length > 0 ? (
+                <FlatList
+                    data={Object.keys(tracabilities).sort().reverse()}
+                    renderItem={renderMonthItem}
+                    keyExtractor={(item) => item}
+                />
+            ) : (
+                renderEmptyState()
+            )}
             <Modal
                 animationType="slide"
                 transparent={true}
@@ -227,6 +243,35 @@ const styles = StyleSheet.create({
         height: 120,
         resizeMode: 'cover',
         borderRadius: 8,
+    },
+    noImagesText: {
+        fontSize: 14,
+        color: '#666',
+        fontStyle: 'italic',
+        textAlign: 'center',
+        marginTop: 10,
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    emptyIcon: {
+        marginBottom: 20,
+        opacity: 0.8,
+    },
+    emptyTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 10,
+    },
+    emptyDescription: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+        lineHeight: 22,
     },
     modalContainer: {
         flex: 1,
