@@ -41,6 +41,10 @@ import TestNotif from "./screens/TestNotif";
 import Tcp from "./screens/tcp/Tcp";
 import tcpEdit from "./screens/tcp/TcpEdit";
 import HistoriqueChangementTemperature from "./screens/historique/Tcp/HistoriqueChangementTemperature";
+import ListeTaches from "./screens/nettoyage/ListeTaches";
+import AccueilNettoyage2 from "./screens/nettoyage/Zones";
+import AccueilNettoyageFirst from "./screens/nettoyage/Zones";
+import Zones from "./screens/nettoyage/Zones";
 
 const TabIcon = ({color, icon, name, focused}) => {
     return (
@@ -111,19 +115,29 @@ export default function App() {
                         <Stack.Screen name="Reception Final" component={ReceptionFinal}
                                       options={{title: "Réception planifiée"}}/>
                         <Stack.Screen name="Nettoyage" component={Nettoyage}/>
+                        <Stack.Screen name="Accueil Nettoyage" component={ListeTaches}/>
+                        <Stack.Screen name="Zones de nettoyage" component={Zones}/>
                         <Stack.Screen name="Liste Postes" component={ListePostes}/>
                         <Stack.Screen name="TcProduit" component={TcProduit} options={{title: "T°C produit"}}/>
                         <Stack.Screen name="Tcp" component={Tcp} options={{title: "T°C produit"}}/>
                         <Stack.Screen name="Modifier Tcp" component={tcpEdit} options={{title: "T°C produit"}}/>
                         <Stack.Screen name="TcpOperation" component={TcpOperation} options={{title: "T°C - Produit"}}/>
-                        <Stack.Screen name="Historique Tracabilite" component={HistoriqueTracabilite} options={{title: "Historique de traçabilité"}}/>
-                        <Stack.Screen name="Historique Tracabilité Simplifiée" component={HistoSimplifiee} options={{title: "Historique de traçabilité simplifiée"}}/>
-                        <Stack.Screen name="Historique Tracabilité Détaillée" component={HistoDetaillee} options={{title: "Historique de traçabilité détaillée"}}/>
-                        <Stack.Screen name="Historique Température" component={HistoriqueTemperature} options={{title: "Historique des relevés de températures"}}/>
-                        <Stack.Screen name="Historique Plan de nettoyage" component={HistoriqueNettoyage} options={{title: "Historique des plans de nettoyage"}}/>
-                        <Stack.Screen name="Historique Relevé Huile" component={HistoriqueHuile} options={{title: "Historique des relevés d'huiles"}}/>
-                        <Stack.Screen name="Historique Réception" component={HistoriqueReception} options={{title: "Historique des réceptions"}}/>
-                        <Stack.Screen name="Historique Tcp" component={HistoriqueChangementTemperature} options={{title: "Historique T°C produit"}}/>
+                        <Stack.Screen name="Historique Tracabilite" component={HistoriqueTracabilite}
+                                      options={{title: "Historique de traçabilité"}}/>
+                        <Stack.Screen name="Historique Tracabilité Simplifiée" component={HistoSimplifiee}
+                                      options={{title: "Historique de traçabilité simplifiée"}}/>
+                        <Stack.Screen name="Historique Tracabilité Détaillée" component={HistoDetaillee}
+                                      options={{title: "Historique de traçabilité détaillée"}}/>
+                        <Stack.Screen name="Historique Température" component={HistoriqueTemperature}
+                                      options={{title: "Historique des relevés de températures"}}/>
+                        <Stack.Screen name="Historique Plan de nettoyage" component={HistoriqueNettoyage}
+                                      options={{title: "Historique des plans de nettoyage"}}/>
+                        <Stack.Screen name="Historique Relevé Huile" component={HistoriqueHuile}
+                                      options={{title: "Historique des relevés d'huiles"}}/>
+                        <Stack.Screen name="Historique Réception" component={HistoriqueReception}
+                                      options={{title: "Historique des réceptions"}}/>
+                        <Stack.Screen name="Historique Tcp" component={HistoriqueChangementTemperature}
+                                      options={{title: "Historique T°C produit"}}/>
                     </Stack.Navigator>
                 </NavigationContainer>
             ) : (
