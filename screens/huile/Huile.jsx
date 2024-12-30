@@ -206,7 +206,7 @@ const Huile = ({navigation, route}) => {
                 <Modal isVisible={isModalVisible}>
                     <View className="p-6 space-y-8 bg-white items-center rounded-2xl justify-between">
                         <View className="w-full" style={{gap: 20}}>
-                            <Text className="text-xl text-center font-extrabold">Ajouter un produit</Text>
+                            <Text className="text-xl text-center font-extrabold">Ajouter un bac à huiles</Text>
                             <View className="space-y-4">
                                 <FormField
                                     title="Nom du bac à huiles"

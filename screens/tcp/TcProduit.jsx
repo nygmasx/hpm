@@ -124,7 +124,7 @@ const TcProduit = ({ navigation }) => {
                     <View style={styles.modalHeader}>
                         <Text style={styles.modalTitle}>Ajouter un produit</Text>
                         <View style={styles.formField}>
-                            <FormField title="Nom de l'équipement" value={productName} handleChangeText={setProductName} />
+                            <FormField title="Nom du produit" value={productName} handleChangeText={setProductName} />
                         </View>
                     </View>
                     <View style={styles.modalButtons}>

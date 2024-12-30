@@ -197,7 +197,7 @@ const TracabiliteFirst = ({navigation, route}) => {
                     <View style={styles.modalHeader}>
                         <Text style={styles.modalTitle}>Ajouter un produit</Text>
                         <View style={styles.formField}>
-                            <FormField title="Nom de l'équipement" value={productName}
+                            <FormField title="Nom du produit" value={productName}
                                        handleChangeText={setProductName}/>
                         </View>
                     </View>
