@@ -21,7 +21,7 @@ import { AuthContext } from "../../../context/AuthProvider";
 
 const { width, height } = Dimensions.get('window');
 
-const LoginScreen = () => {
+const LoginScreen = ({navigation}) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const { login, error, isLoading } = useContext(AuthContext);
@@ -62,7 +62,7 @@ const LoginScreen = () => {
                                 <View style={styles.signupContainer}>
                                     <View style={styles.signupTextContainer}>
                                         <Text style={styles.signupText}>Vous êtes nouveau ?</Text>
-                                        <TouchableOpacity>
+                                        <TouchableOpacity onPress={() => navigation.navigate('Register Screen')}>
                                             <Text style={styles.signupLink}>Inscription</Text>
                                         </TouchableOpacity>
                                     </View>

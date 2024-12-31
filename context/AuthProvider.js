@@ -17,6 +17,31 @@ const AuthProvider = ({children}) => {
                 setUser,
                 error,
                 isLoading,
+                register: async (email, password) => {
+                    setIsLoading(true);
+                    try {
+                        const response = await axiosConfig.post('/register', {
+                            email,
+                            password,
+                            device_name: 'mobile',
+                        });
+
+                        const userResponse = {
+                            token: response.data.token,
+                            id: response.data.user.id,
+                            email: response.data.user.email,
+                        };
+
+                        setUser(userResponse);
+                        setError(null);
+                        await SecureStore.setItemAsync('user', JSON.stringify(userResponse));
+                    } catch (error) {
+                        console.log(error.response?.data);
+                        setError(error.response?.data?.message || 'Une erreur est survenue');
+                    } finally {
+                        setIsLoading(false);
+                    }
+                },
                 login: (email, password) => {
                     setIsLoading(true);
                     axiosConfig
