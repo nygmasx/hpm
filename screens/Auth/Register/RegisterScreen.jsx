@@ -1,4 +1,4 @@
-import React, {useContext, useState} from 'react';
+import React, {useContext, useState, useEffect} from 'react';
 import {
     Dimensions,
     ImageBackground,
@@ -10,7 +10,6 @@ import {
     TouchableWithoutFeedback,
     View
 } from "react-native";
-import backgrounds from "../../../constants/backgrounds";
 import FormField from "../../../components/FormField";
 import CustomButton from "../../../components/CustomButton";
 import {AuthContext} from "../../../context/AuthProvider";
@@ -20,16 +19,15 @@ const {width, height} = Dimensions.get('window');
 const RegisterScreen = ({navigation}) => {
 
     const [email, setEmail] = useState('');
+    const [name, setName] = useState('');
     const [password, setPassword] = useState('');
-    const {register, error, isLoading} = useContext(AuthContext);
+    const { register, error, isLoading, resetError } = useContext(AuthContext);
 
-    const handleRegister = async () => {
-        try {
-            await register(email, password);
-        } catch (error) {
-            console.log(error);
-        }
-    };
+    useEffect(() => {
+        return () => {
+            resetError();
+        };
+    }, []);
 
     return (
         <SafeAreaView style={styles.container}>
@@ -43,6 +41,7 @@ const RegisterScreen = ({navigation}) => {
                             <View style={styles.formContainer}>
                                 <Text style={styles.title}>Créez votre compte</Text>
                                 <View style={styles.formFields}>
+                                    <FormField placeholder="Nom" value={name} handleChangeText={setName}/>
                                     {error && <Text style={styles.errorText}>{error}</Text>}
                                     <FormField placeholder="Email" value={email} handleChangeText={setEmail}/>
                                     <FormField placeholder="Mot de passe" value={password} name="Password"
@@ -55,7 +54,7 @@ const RegisterScreen = ({navigation}) => {
                             <View style={styles.buttonContainer}>
                                 <CustomButton
                                     title="Créer un compte"
-                                    handlePress={() => login(email, password)}
+                                    handlePress={() => register(name, email, password)}
                                     isLoading={isLoading}
                                 />
 

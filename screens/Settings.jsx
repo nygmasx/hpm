@@ -1,4 +1,4 @@
-import React, {useContext} from 'react';
+import React, {useContext, useEffect} from 'react';
 import { SafeAreaView, ScrollView, View, Text, Image, TouchableOpacity, StyleSheet, Dimensions, Linking } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import icons from "../constants/icons";
@@ -30,7 +30,6 @@ const Settings = ({navigation}) => {
             await Linking.openURL('https://tally.so/r/mDvkep');
         } catch (error) {
             console.error('An error occurred while opening the privacy policy:', error);
-            // Vous pourriez ajouter ici une alerte pour l'utilisateur
         }
     };
 
@@ -44,7 +43,7 @@ const Settings = ({navigation}) => {
                             style={styles.avatar}
                         />
                     </View>
-                    <Text style={styles.userName}>{user.name}</Text>
+                    <Text style={styles.userName}>{user.email}</Text>
                 </View>
 
                 <SettingsItem

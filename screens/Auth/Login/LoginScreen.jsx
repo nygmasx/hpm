@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import {
     Button,
     ImageBackground,
@@ -24,7 +24,13 @@ const { width, height } = Dimensions.get('window');
 const LoginScreen = ({navigation}) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const { login, error, isLoading } = useContext(AuthContext);
+    const { login, error, isLoading, resetError } = useContext(AuthContext);
+
+    useEffect(() => {
+        return () => {
+            resetError();
+        };
+    }, []);
 
     return (
         <View style={styles.container}>
