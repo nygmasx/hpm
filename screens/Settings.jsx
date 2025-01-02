@@ -1,10 +1,20 @@
 import React, {useContext, useEffect} from 'react';
-import { SafeAreaView, ScrollView, View, Text, Image, TouchableOpacity, StyleSheet, Dimensions, Linking } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import {
+    SafeAreaView,
+    ScrollView,
+    View,
+    Text,
+    Image,
+    TouchableOpacity,
+    StyleSheet,
+    Dimensions,
+    Linking
+} from 'react-native';
+import {Feather} from '@expo/vector-icons';
 import icons from "../constants/icons";
 import {AuthContext} from "../context/AuthProvider";
 
-const { width, height } = Dimensions.get('window');
+const {width, height} = Dimensions.get('window');
 const scale = width / 320;
 
 const normalize = (size) => {
@@ -12,13 +22,13 @@ const normalize = (size) => {
     return Math.round(newSize);
 };
 
-const SettingsItem = ({ title, icon, route, handlePress }) => (
+const SettingsItem = ({title, icon, route, handlePress}) => (
     <TouchableOpacity
         onPress={handlePress}
         style={styles.settingsItem}
     >
         <Text style={styles.settingsItemText}>{title}</Text>
-        <Feather name="chevron-right" size={normalize(24)} color="#000" />
+        <Feather name="chevron-right" size={normalize(24)} color="#000"/>
     </TouchableOpacity>
 );
 
@@ -50,10 +60,10 @@ const Settings = ({navigation}) => {
                     title="Confidentialité et sécurité"
                     handlePress={handlePrivacyPress}
                 />
-                <SettingsItem title="Nous contacter - Service client" />
-                <SettingsItem title="Mon Abonnement" />
-                <SettingsItem title="Déconnexion" handlePress={logout} />
-                <SettingsItem title="Supprimer mon compte"/>
+                <SettingsItem title="Nous contacter - Service client"/>
+                <SettingsItem title="Mon Abonnement"/>
+                <SettingsItem title="Déconnexion" handlePress={logout}/>
+                <SettingsItem title="Supprimer mon compte" handlePress={() => navigation.navigate('Delete Account')}/>
             </ScrollView>
         </SafeAreaView>
     );

@@ -45,6 +45,7 @@ import ListeTaches from "./screens/nettoyage/ListeTaches";
 import AccueilNettoyage2 from "./screens/nettoyage/Zones";
 import AccueilNettoyageFirst from "./screens/nettoyage/Zones";
 import Zones from "./screens/nettoyage/Zones";
+import DeleteAccount from "./screens/settings/DeleteAccount";
 
 const TabIcon = ({color, icon, name, focused}) => {
     return (
@@ -138,6 +139,8 @@ export default function App() {
                                       options={{title: "Historique des réceptions"}}/>
                         <Stack.Screen name="Historique Tcp" component={HistoriqueChangementTemperature}
                                       options={{title: "Historique T°C produit"}}/>
+                        <Stack.Screen name="Delete Account" component={DeleteAccount}
+                                      options={{title: "Supprimer mon compte"}}/>
                     </Stack.Navigator>
                 </NavigationContainer>
             ) : (
