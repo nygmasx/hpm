@@ -47,9 +47,6 @@ const RegisterScreen = ({navigation}) => {
                                     <FormField placeholder="Mot de passe" value={password} name="Password"
                                                handleChangeText={setPassword}/>
                                 </View>
-                                <TouchableOpacity style={styles.forgotPasswordContainer}>
-                                    <Text style={styles.forgotPassword}>Mot de passe oublié ?</Text>
-                                </TouchableOpacity>
                             </View>
                             <View style={styles.buttonContainer}>
                                 <CustomButton

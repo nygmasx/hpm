@@ -10,6 +10,8 @@ import {AuthContext} from "../../context/AuthProvider";
 import Toast from "react-native-toast-message";
 
 const {width, height} = Dimensions.get('window');
+const scale = Math.min(width, height) / 375;
+const responsiveSize = (size) => size * scale;
 
 const TcpEdit = ({route, navigation}) => {
     const {user} = useContext(AuthContext);
@@ -24,11 +26,23 @@ const TcpEdit = ({route, navigation}) => {
     const [selectedProducts, setSelectedProducts] = useState([]);
     const [operationType, setOperationType] = useState('');
     const [additionalInfo, setAdditionalInfo] = useState('');
+    const [styles, setStyles] = useState(createStyles(width, height));
 
     const {id} = route.params;
 
     useEffect(() => {
         fetchTcpData();
+
+        const updateStyles = () => {
+            const {width, height} = Dimensions.get('window');
+            setStyles(createStyles(width, height));
+        };
+
+        Dimensions.addEventListener('change', updateStyles);
+
+        return () => {
+            Dimensions.removeEventListener('change', updateStyles);
+        };
     }, [id]);
 
     const fetchTcpData = async () => {
@@ -40,9 +54,6 @@ const TcpEdit = ({route, navigation}) => {
 
             const parsedStartTemp = parseInt(tcpData.start_temperature) || 0;
             const parsedEndTemp = parseInt(tcpData.end_temperature) || 0;
-
-            console.log('Fetched start temperature:', parsedStartTemp);
-            console.log('Fetched end temperature:', parsedEndTemp);
 
             setStartTemp(parsedStartTemp);
             setEndTemp(parsedEndTemp);
@@ -68,21 +79,11 @@ const TcpEdit = ({route, navigation}) => {
     };
 
     const renderTempControl = (temp, setTemp, isEndTemp = false) => {
-        console.log(`Rendering ${isEndTemp ? 'end' : 'start'} temp control. Temp:`, temp);
         return (
             <CounterInput
                 horizontal={true}
                 increaseButtonBackgroundColor="#008170"
                 decreaseButtonBackgroundColor="#008170"
-                className="w-full rounded-xl h-16 border-[1px] border-secondary shadow-none"
-                min={operationType === 'Liaison froide' || operationType === 'Remise en T°C' ? undefined : 0}
-                initial={temp}
-                value={temp}
-                onChange={(counter) => {
-                    console.log(`${isEndTemp ? 'End' : 'Start'} temp changed to:`, counter);
-                    setTemp(counter);
-                }}
-                reverseCounterButtons
                 style={[
                     styles.tempControl,
                     (isEndTemp ?
@@ -90,17 +91,20 @@ const TcpEdit = ({route, navigation}) => {
                             (temp < 63 && operationType !== 'Liaison froide' && operationType !== 'Remise en T°C')
                     ) && styles.tempControlRed
                 ]}
+                min={operationType === 'Liaison froide' || operationType === 'Remise en T°C' ? undefined : 0}
+                initial={temp}
+                value={temp}
+                onChange={setTemp}
+                reverseCounterButtons
             />
         );
     };
 
     const handleStartDateTimeChange = (dateTime) => {
-        console.log('Start DateTime changed:', dateTime);
         setStartDateTime(dateTime);
     };
 
     const handleEndDateTimeChange = (dateTime) => {
-        console.log('End DateTime changed:', dateTime);
         if (new Date(dateTime) <= new Date(startDateTime)) {
             Alert.alert(
                 "Date de fin invalide",
@@ -164,8 +168,6 @@ const TcpEdit = ({route, navigation}) => {
                 }
             }
 
-            console.log('Submitting data:', JSON.stringify(data, null, 2));
-
             axiosConfig.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
             const response = await axiosConfig.put(`/temperatures-changement/${id}/edit`, data, {
                 headers: {
@@ -173,7 +175,6 @@ const TcpEdit = ({route, navigation}) => {
                 }
             });
 
-            console.log('Response:', response.data);
             Toast.show({
                 type: 'success',
                 text1: 'Tcp modifié avec succès 🟢',
@@ -183,7 +184,6 @@ const TcpEdit = ({route, navigation}) => {
             console.error('Error updating TCP:', error);
             let errorMessage = 'Une erreur est survenue lors de la modification du TCP';
             if (error.response) {
-                console.error('Error response:', error.response.data);
                 errorMessage = error.response.data.message || errorMessage;
             } else if (error.message) {
                 errorMessage = error.message;
@@ -228,8 +228,8 @@ const TcpEdit = ({route, navigation}) => {
                         title="Renseigner la fin du processus maintenant"
                         checked={showEndProcess}
                         onPress={() => setShowEndProcess(!showEndProcess)}
-                        checkedIcon={<AntDesign name="checkcircle" size={24} color="#008170"/>}
-                        uncheckedIcon={<FontAwesome name="circle-o" size={24} color="#8F9098"/>}
+                        checkedIcon={<AntDesign name="checkcircle" size={responsiveSize(24)} color="#008170"/>}
+                        uncheckedIcon={<FontAwesome name="circle-o" size={responsiveSize(24)} color="#8F9098"/>}
                         containerStyle={styles.checkboxContainer}
                         textStyle={styles.checkboxText}
                     />
@@ -261,8 +261,8 @@ const TcpEdit = ({route, navigation}) => {
                                 title={action}
                                 checked={selectedAction === index}
                                 onPress={() => setSelectedAction(index)}
-                                checkedIcon={<AntDesign name="checkcircle" size={24} color="#008170"/>}
-                                uncheckedIcon={<FontAwesome name="circle-o" size={24} color="#8F9098"/>}
+                                checkedIcon={<AntDesign name="checkcircle" size={responsiveSize(24)} color="#008170"/>}
+                                uncheckedIcon={<FontAwesome name="circle-o" size={responsiveSize(24)} color="#8F9098"/>}
                                 containerStyle={styles.actionCheckbox}
                                 textStyle={styles.actionText}
                             />
@@ -289,39 +289,51 @@ const TcpEdit = ({route, navigation}) => {
     );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (width, height) => StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: 'white',
     },
     scrollContent: {
         flexGrow: 1,
-        padding: width * 0.04,
+        padding: responsiveSize(16),
     },
     headerContainer: {
         borderWidth: 1,
         borderColor: '#E5E5E5',
-        borderRadius: 16,
-        padding: height * 0.015,
-        marginBottom: height * 0.02,
+        borderRadius: responsiveSize(16),
+        padding: responsiveSize(12),
+        marginBottom: responsiveSize(16),
+        backgroundColor: 'white',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 3,
     },
     headerText: {
-        fontSize: width * 0.045,
+        fontSize: responsiveSize(18),
         fontWeight: 'bold',
         textAlign: 'center',
+        includeFontPadding: false,
     },
     section: {
-        marginBottom: height * 0.02,
+        marginBottom: responsiveSize(16),
     },
     sectionTitle: {
-        fontSize: width * 0.04,
+        fontSize: responsiveSize(16),
         fontWeight: 'bold',
-        marginBottom: height * 0.01,
+        marginBottom: responsiveSize(8),
+        includeFontPadding: false,
     },
     productItem: {
         textAlign: 'center',
-        fontSize: width * 0.035,
-        marginBottom: height * 0.005,
+        fontSize: responsiveSize(14),
+        marginBottom: responsiveSize(4),
+        includeFontPadding: false,
     },
     checkboxContainer: {
         backgroundColor: 'transparent',
@@ -331,34 +343,44 @@ const styles = StyleSheet.create({
     },
     checkboxText: {
         fontWeight: 'normal',
-        fontSize: width * 0.035,
+        fontSize: responsiveSize(14),
+        includeFontPadding: false,
     },
     actionTitle: {
-        fontSize: width * 0.04,
+        fontSize: responsiveSize(16),
         fontWeight: 'bold',
-        marginBottom: height * 0.01,
+        marginBottom: responsiveSize(8),
+        includeFontPadding: false,
     },
     actionCheckbox: {
         backgroundColor: 'transparent',
         borderWidth: 0,
         padding: 0,
         marginLeft: 0,
-        marginBottom: height * 0.005,
+        marginBottom: responsiveSize(4),
     },
     actionText: {
         fontWeight: 'normal',
-        fontSize: width * 0.035,
+        fontSize: responsiveSize(14),
+        includeFontPadding: false,
     },
     buttonContainer: {
-        padding: width * 0.04,
-        paddingBottom: height * 0.05,
+        padding: responsiveSize(16),
+        paddingBottom: responsiveSize(20),
     },
     additionalInfo: {
-        fontSize: width * 0.035,
+        fontSize: responsiveSize(14),
         color: '#333',
+        includeFontPadding: false,
+    },
+    tempControl: {
+        borderRadius: responsiveSize(12),
+        height: responsiveSize(64),
+        borderWidth: 1,
+        borderColor: '#C5C6CC',
     },
     tempControlRed: {
-        backgroundColor: '#FFCCCB', // Light red background
+        backgroundColor: '#FFCCCB',
     },
 });
 

@@ -79,7 +79,6 @@ const styles = StyleSheet.create({
         gap: height * 0.025,
     },
     bottomSection: {
-        flex: 1,
         width: '100%',
         alignItems: 'center',
     },

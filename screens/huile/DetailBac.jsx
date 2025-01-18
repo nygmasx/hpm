@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, Alert } from "react-native";
+import { SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity, View, Alert, Dimensions } from "react-native";
 import { FontAwesome } from "@expo/vector-icons";
 import CounterInput from "react-native-counter-input";
 import PictureModal from "../../components/PictureModal";
@@ -8,6 +8,9 @@ import { useRoute } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import { SelectList } from "react-native-dropdown-select-list";
+
+const windowWidth = Dimensions.get('window').width;
+const windowHeight = Dimensions.get('window').height;
 
 const DetailBac = ({ navigation }) => {
     const [controlType, setControlType] = useState('');
@@ -67,18 +70,12 @@ const DetailBac = ({ navigation }) => {
         }
 
         if (!image) {
-            Alert.alert("Attention", "Aucune photo n'a été ajoutée. Voulez-vous continuer sans photo ?", [
+            Alert.alert("Attention", "Veuillez ajouter une image.", [
                 {
                     text: "Annuler",
                     style: "cancel"
                 },
-                {
-                    text: "Continuer",
-                    onPress: () => submitData()
-                }
             ]);
-        } else {
-            submitData();
         }
     };
 
@@ -110,11 +107,11 @@ const DetailBac = ({ navigation }) => {
     ];
 
     return (
-        <SafeAreaView className="bg-white flex-1 h-full">
+        <SafeAreaView style={styles.container}>
             <ScrollView>
-                <View className="w-full flex-1 px-4 my-6 h-full flex-col space-y-4">
-                    <View style={{ gap: 15 }}>
-                        <Text className="font-bold text-lg">Type de contrôle</Text>
+                <View style={styles.contentContainer}>
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Type de contrôle</Text>
                         <SelectList
                             setSelected={(value) => setControlType(value)}
                             data={data}
@@ -123,32 +120,32 @@ const DetailBac = ({ navigation }) => {
                             placeholder="Sélectionnez le type de contrôle"
                         />
                     </View>
-                    <Text className="font-bold text-lg">Température (°C)</Text>
+                    <Text style={styles.sectionTitle}>Température (°C)</Text>
                     <CounterInput
                         horizontal={true}
                         increaseButtonBackgroundColor="#008170"
                         decreaseButtonBackgroundColor="#008170"
-                        className="w-full rounded-xl h-16 border-[1px] border-secondary shadow-none"
+                        style={styles.counterInput}
                         onChange={(counter) => setTemperature(counter)}
                         min={65}
                         initial={65}
                         value={temperature}
                         reverseCounterButtons
                     />
-                    <Text className="font-bold text-lg">Polarité (%)</Text>
+                    <Text style={styles.sectionTitle}>Polarité (%)</Text>
                     <CounterInput
                         horizontal={true}
                         increaseButtonBackgroundColor="#008170"
                         decreaseButtonBackgroundColor="#008170"
-                        className="w-full rounded-xl h-16 border-[1px] border-secondary shadow-none"
+                        style={styles.counterInput}
                         onChange={(counter) => setPolarity(counter)}
                         min={0}
                         initial={0}
                         value={polarity}
                         reverseCounterButtons
                     />
-                    <View style={{ gap: 15 }}>
-                        <Text className="font-bold text-lg">Action corrective ?</Text>
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Action corrective ?</Text>
                         <SelectList
                             setSelected={(value) => setCorrectiveAction(value)}
                             data={actionData}
@@ -157,25 +154,25 @@ const DetailBac = ({ navigation }) => {
                             placeholder="Sélectionnez le type d'action corrective"
                         />
                     </View>
-                    <Text className="font-bold text-lg">Photo de l'étiquette</Text>
-                    <View className="items-end">
+                    <Text style={styles.sectionTitle}>Photo de l'étiquette</Text>
+                    <View style={styles.cameraButtonContainer}>
                         <TouchableOpacity
-                            className="p-2 bg-primary rounded-xl items-center flex-row"
+                            style={styles.cameraButton}
                             onPress={uploadImage}
                         >
                             <FontAwesome name="camera" size={20} color="white" />
-                            <Text className="text-white font-bold ml-2">
+                            <Text style={styles.cameraButtonText}>
                                 {image ? "Changer" : "Ajouter"}
                             </Text>
                         </TouchableOpacity>
                     </View>
                     {image && (
-                        <View className="mt-2">
+                        <View style={styles.imagePreview}>
                             <PictureModal image={image.uri} imageName={image.name} imageSize={image.size} />
                         </View>
                     )}
                 </View>
-                <View className="w-full px-4 my-8">
+                <View style={styles.submitButtonContainer}>
                     <CustomButton title="Valider la saisie" handlePress={handleSubmit} />
                 </View>
             </ScrollView>
@@ -184,13 +181,66 @@ const DetailBac = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: 'white',
+        height: windowHeight,
+    },
+    contentContainer: {
+        width: '100%',
+        flex: 1,
+        paddingHorizontal: windowWidth * 0.04,
+        marginVertical: windowHeight * 0.02,
+        height: '100%',
+    },
+    section: {
+        gap: windowHeight * 0.02,
+        marginBottom: windowHeight * 0.02,
+    },
+    sectionTitle: {
+        fontWeight: 'bold',
+        fontSize: Math.min(windowWidth * 0.045, 18),
+        marginBottom: windowHeight * 0.01,
+    },
     select: {
-        width: "100%",
-        paddingVertical: 20,
-        borderStyle: "solid",
+        width: '100%',
+        paddingVertical: windowHeight * 0.025,
+        borderStyle: 'solid',
         borderRadius: 12,
-        borderColor: "#C5C6CC",
-    }
+        borderColor: '#C5C6CC',
+    },
+    counterInput: {
+        width: '100%',
+        borderRadius: 12,
+        height: windowHeight * 0.07,
+        borderWidth: 1,
+        borderColor: '#C5C6CC',
+        marginBottom: windowHeight * 0.02,
+    },
+    cameraButtonContainer: {
+        alignItems: 'flex-end',
+        marginBottom: windowHeight * 0.02,
+    },
+    cameraButton: {
+        padding: windowWidth * 0.02,
+        backgroundColor: '#008170',
+        borderRadius: 12,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    cameraButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
+        marginLeft: windowWidth * 0.02,
+    },
+    imagePreview: {
+        marginTop: windowHeight * 0.01,
+    },
+    submitButtonContainer: {
+        width: '100%',
+        paddingHorizontal: windowWidth * 0.04,
+        marginVertical: windowHeight * 0.03,
+    },
 });
 
 export default DetailBac;

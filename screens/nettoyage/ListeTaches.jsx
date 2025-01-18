@@ -16,7 +16,6 @@ import axiosConfig from "../../helpers/axiosConfig";
 import {AuthContext} from "../../context/AuthProvider";
 import Toast from "react-native-toast-message";
 
-// Enable LayoutAnimation for iOS
 if (Platform.OS === 'ios') {
     if (UIManager.setLayoutAnimationEnabledExperimental) {
         UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -114,8 +113,7 @@ const ListeTaches = ({route}) => {
                     <View style={styles.taskDetails}>
                         <View style={styles.detailRow}>
                             <Ionicons name="location-outline" size={20} color="#666"/>
-                            <Text style={styles.detailText}
-                                  className="font-bold">Poste: {task.cleaning_station.name}</Text>
+                            <Text style={styles.detailText}>Poste: {task.cleaning_station.name}</Text>
                         </View>
                         <View style={styles.detailRow}>
                             <Ionicons name="time-outline" size={20} color="#666"/>

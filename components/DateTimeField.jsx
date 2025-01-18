@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
 import RNDateTimePicker from "@react-native-community/datetimepicker";
-import { Text, View } from "react-native";
+import { Text, View, StyleSheet, Dimensions } from "react-native";
 import { Ionicons } from '@expo/vector-icons';
+
+const { width, height } = Dimensions.get('window');
+const scale = Math.min(width, height) / 375;
+const responsiveSize = (size) => size * scale;
 
 const DateTimeField = ({ title, onChange }) => {
     const [date, setDate] = useState(new Date());
@@ -39,32 +43,92 @@ const DateTimeField = ({ title, onChange }) => {
     };
 
     return (
-        <View className="space-y-4">
-            <Text className="font-bold text-lg">{title}</Text>
-            <View style={{ flexDirection: "row", gap: 20 }}>
-                <View className="border-[1px] flex space-x-2 border-secondary w-4/7 h-16 px-4 rounded-[12px] focus:border-primary justify-center items-center flex-row">
+        <View style={styles.container}>
+            <Text style={styles.title}>{title}</Text>
+            <View style={styles.fieldsWrapper}>
+                <View style={styles.datePickerContainer}>
                     <RNDateTimePicker
-                        className="text-center"
+                        style={styles.picker}
                         mode="date"
                         value={date}
                         display="default"
                         onChange={onDateChange}
                     />
-                    <Ionicons name="calendar-clear" size={24} color="#008170" />
+                    <Ionicons
+                        name="calendar-clear"
+                        size={responsiveSize(24)}
+                        color="#008170"
+                    />
                 </View>
-                <View className="border-[1px] flex space-x-2 border-secondary w-2/5 h-16 px-4 rounded-[12px] focus:border-primary justify-center items-center flex-row">
+                <View style={styles.timePickerContainer}>
                     <RNDateTimePicker
-                        className="text-center"
+                        style={styles.picker}
                         mode="time"
                         value={time}
                         display="default"
                         onChange={onTimeChange}
                     />
-                    <Ionicons name="time" size={24} color="#008170" />
+                    <Ionicons
+                        name="time"
+                        size={responsiveSize(24)}
+                        color="#008170"
+                    />
                 </View>
             </View>
         </View>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        width: '100%',
+        gap: responsiveSize(16)
+    },
+    title: {
+        fontWeight: 'bold',
+        fontSize: responsiveSize(18),
+        includeFontPadding: false
+    },
+    fieldsWrapper: {
+        flexDirection: 'row',
+        gap: responsiveSize(20),
+        width: '100%'
+    },
+    datePickerContainer: {
+        flex: 4,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#C5C6CC', // Replace with your secondary color
+        height: responsiveSize(64),
+        paddingHorizontal: responsiveSize(16),
+        borderRadius: responsiveSize(12),
+        gap: responsiveSize(8)
+    },
+    timePickerContainer: {
+        flex: 2,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: '#C5C6CC', // Replace with your secondary color
+        height: responsiveSize(64),
+        paddingHorizontal: responsiveSize(16),
+        borderRadius: responsiveSize(12),
+        gap: responsiveSize(8)
+    },
+    picker: {
+        alignSelf: 'center'
+    }
+});
+
+// Handle orientation changes
+const updateLayout = () => {
+    const { width, height } = Dimensions.get('window');
+    scale = Math.min(width, height) / 375;
+};
+
+Dimensions.addEventListener('change', updateLayout);
 
 export default DateTimeField;

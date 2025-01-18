@@ -27,7 +27,6 @@ const TcpOperation = ({ route, navigation }) => {
             horizontal={true}
             increaseButtonBackgroundColor="#008170"
             decreaseButtonBackgroundColor="#008170"
-            className="w-full rounded-xl h-16 border-[1px] border-secondary shadow-none"
             min={operationType === 'Liaison froide' || operationType === 'Remise en T°C' ? undefined : 0}
             initial={operationType === 'Liaison froide' || operationType === 'Remise en T°C' ? 0 : 63}
             value={temp}
@@ -305,7 +304,7 @@ const styles = StyleSheet.create({
         color: '#333',
     },
     tempControl: {
-        // Add any additional styles for the temperature control here
+        shadowColor: 'none'
     },
     tempControlRed: {
         backgroundColor: '#FFCCCB', // Light red background

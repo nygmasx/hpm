@@ -1,17 +1,16 @@
 import React, {useState} from 'react';
-import {Text, TextInput, TouchableOpacity, View, Image} from "react-native";
+import {Text, TextInput, TouchableOpacity, View, Image, StyleSheet} from "react-native";
 import icons from "../constants/icons";
 
 const FormField = ({title, name, value, otherStyles, placeholder, handleChangeText, multiline, ...props}) => {
     const [showPassword, setShowPassword] = useState(false)
     return (
-        <View className="space-y-2">
-            <Text className="font-bold text-lg">{title}</Text>
+        <View style={styles.container}>
+            <Text style={styles.title}>{title}</Text>
 
-            <View
-                className="border-[1px] border-secondary w-full h-16 px-4 rounded-[12px] focus:border-primary items-center flex-row">
+            <View style={styles.inputContainer}>
                 <TextInput
-                    className="flex-1 font-medium text-[18px] h-full w-full"
+                    style={styles.input}
                     value={value}
                     placeholder={placeholder}
                     placeholderTextColor="#7b7b8b"
@@ -21,12 +20,43 @@ const FormField = ({title, name, value, otherStyles, placeholder, handleChangeTe
                 />
                 {name === "Password" && (
                     <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                        <Image className="w-6 h-6" source={!showPassword ? icons.eye : icons.eyeHide}/>
+                        <Image style={styles.icon} source={!showPassword ? icons.eye : icons.eyeHide}/>
                     </TouchableOpacity>
                 )}
             </View>
         </View>
     );
 };
+
+const styles = StyleSheet.create({
+    container: {
+        gap: 8,
+    },
+    title: {
+        fontWeight: 'bold',
+        fontSize: 18, // equivalent to text-lg
+    },
+    inputContainer: {
+        borderWidth: 1,
+        borderColor: '#C5C6CC',
+        width: '100%',
+        height: 64, // equivalent to h-16
+        paddingHorizontal: 16, // equivalent to px-4
+        borderRadius: 12,
+        alignItems: 'center',
+        flexDirection: 'row',
+    },
+    input: {
+        flex: 1,
+        fontWeight: '500', // equivalent to font-medium
+        fontSize: 18,
+        height: '100%',
+        width: '100%',
+    },
+    icon: {
+        width: 24, // equivalent to w-6
+        height: 24, // equivalent to h-6
+    }
+});
 
 export default FormField;

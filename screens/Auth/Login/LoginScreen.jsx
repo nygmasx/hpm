@@ -55,9 +55,6 @@ const LoginScreen = ({navigation}) => {
                                     <FormField placeholder="Email" value={email} handleChangeText={setEmail}/>
                                     <FormField placeholder="Mot de passe" value={password} name="Password" handleChangeText={setPassword}/>
                                 </View>
-                                <TouchableOpacity>
-                                    <Text style={styles.forgotPassword}>Mot de passe oublié ?</Text>
-                                </TouchableOpacity>
                             </View>
                             <View style={styles.buttonContainer}>
                                 <CustomButton

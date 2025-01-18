@@ -42,6 +42,13 @@ const Settings = ({navigation}) => {
             console.error('An error occurred while opening the privacy policy:', error);
         }
     };
+    const goToContactForm = async () => {
+        try {
+            await Linking.openURL('https://tally.so/r/w21Bd9');
+        } catch (error) {
+            console.error('An error occurred while opening the privacy policy:', error);
+        }
+    };
 
     return (
         <SafeAreaView style={styles.container}>
@@ -60,7 +67,7 @@ const Settings = ({navigation}) => {
                     title="Confidentialité et sécurité"
                     handlePress={handlePrivacyPress}
                 />
-                <SettingsItem title="Nous contacter - Service client"/>
+                <SettingsItem title="Nous contacter - Service client" handlePress={goToContactForm}/>
                 <SettingsItem title="Mon Abonnement"/>
                 <SettingsItem title="Déconnexion" handlePress={logout}/>
                 <SettingsItem title="Supprimer mon compte" handlePress={() => navigation.navigate('Delete Account')}/>

@@ -15,7 +15,7 @@ import { AuthContext } from "../../context/AuthProvider";
 
 const { width, height } = Dimensions.get('window');
 
-const TWO_HOURS_IN_SECONDS = 14400;
+const TWO_HOURS_IN_SECONDS = 7200;
 
 const Tcp = ({ navigation, route }) => {
     const [tcps, setTcps] = useState([]);

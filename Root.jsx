@@ -7,7 +7,7 @@ import Home from "./screens/Home";
 import Documents from "./screens/Documents";
 import History from "./screens/History";
 import Settings from "./screens/Settings";
-import {ActivityIndicator, Image, Text, View} from "react-native";
+import {ActivityIndicator, Dimensions, Image, Text, View, StyleSheet} from "react-native";
 import icons from "./constants/icons";
 import Tracabilite from "./screens/tracabilite/Tracabilite";
 import Temperature from "./screens/temperature/Temperature";
@@ -23,7 +23,7 @@ import NouvelleReception from "./screens/reception/NouvelleReception";
 import ReceptionProduit from "./screens/reception/ReceptionProduit";
 import ReceptionFinal from "./screens/reception/ReceptionFinal";
 import TcpOperation from "./screens/tcp/TcpOperation";
-import AuthProvider, {AuthContext} from "./context/AuthProvider";
+import {AuthContext} from "./context/AuthProvider";
 import LoginScreen from "./screens/Auth/Login/LoginScreen";
 import RegisterScreen from "./screens/Auth/Register/RegisterScreen";
 import AuthHome from "./screens/Auth/AuthHome";
@@ -37,21 +37,32 @@ import HistoriqueTemperature from "./screens/historique/Temperature/HistoriqueTe
 import HistoriqueNettoyage from "./screens/historique/Nettoyage/HistoriqueNettoyage";
 import HistoriqueHuile from "./screens/historique/Huile/HistoriqueHuile";
 import HistoriqueReception from "./screens/historique/Reception/HistoriqueReception";
-import TestNotif from "./screens/TestNotif";
 import Tcp from "./screens/tcp/Tcp";
 import tcpEdit from "./screens/tcp/TcpEdit";
 import HistoriqueChangementTemperature from "./screens/historique/Tcp/HistoriqueChangementTemperature";
 import ListeTaches from "./screens/nettoyage/ListeTaches";
-import AccueilNettoyage2 from "./screens/nettoyage/Zones";
-import AccueilNettoyageFirst from "./screens/nettoyage/Zones";
 import Zones from "./screens/nettoyage/Zones";
 import DeleteAccount from "./screens/settings/DeleteAccount";
 
-const TabIcon = ({color, icon, name, focused}) => {
+const { width, height } = Dimensions.get('window');
+const scale = Math.min(width, height) / 375;
+const responsiveSize = (size) => size * scale;
+
+const TabIcon = ({ color, icon, name, focused }) => {
+
     return (
-        <View className="w-full flex items-center justify-center gap-2">
-            <Image source={icon} resizeMode="contain" tintColor={color} className="w-[25px] h-[25px]"/>
-            <Text className={`${focused ? 'font-extrabold' : 'font-normal'} text-sm`} style={{color: color}}>
+        <View style={styles.container}>
+            <Image
+                source={icon}
+                resizeMode="contain"
+                tintColor={color}
+                style={styles.icon}
+            />
+            <Text style={[
+                styles.label,
+                focused ? styles.focusedText : styles.normalText,
+                { color }
+            ]}>
                 {name}
             </Text>
         </View>
@@ -82,7 +93,7 @@ export default function App() {
 
     if (isLoading) {
         return (
-            <View className="flex-1 items-center justify-center">
+            <View style={{flex: 1, alignItems: "center", justifyContent: "center"}}>
                 <ActivityIndicator size="large" color="gray"/>
             </View>
         );
@@ -208,3 +219,31 @@ const TabNavigator = () => {
         </Tab.Navigator>
     )
 }
+
+const styles = StyleSheet.create({
+    container: {
+        width: '100%',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: responsiveSize(8),
+    },
+    icon: {
+        width: responsiveSize(25),
+        height: responsiveSize(25),
+    },
+    label: {
+        fontSize: responsiveSize(14), // text-sm
+        includeFontPadding: false,
+    },
+    focusedText: {
+        fontWeight: '800', // font-extrabold
+    },
+    normalText: {
+        fontWeight: 'normal',
+    }
+});
+
+Dimensions.addEventListener('change', () => {
+    const { width, height } = Dimensions.get('window');
+    scale = Math.min(width, height) / 375;
+});
