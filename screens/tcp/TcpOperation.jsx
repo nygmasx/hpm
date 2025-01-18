@@ -22,25 +22,32 @@ const TcpOperation = ({ route, navigation }) => {
 
     const { selectedProducts, operationType, additionalInfo } = route.params;
 
-    const renderTempControl = (temp, setTemp, isEndTemp = false, startTemp = 63) => (
-        <CounterInput
-            horizontal={true}
-            increaseButtonBackgroundColor="#008170"
-            decreaseButtonBackgroundColor="#008170"
-            min={operationType === 'Liaison froide' || operationType === 'Remise en T°C' ? undefined : 0}
-            initial={operationType === 'Liaison froide' || operationType === 'Remise en T°C' ? 0 : 63}
-            value={temp}
-            onChange={(counter) => setTemp(counter)}
-            reverseCounterButtons
-            style={[
-                styles.tempControl,
-                (isEndTemp ?
-                        (temp < startTemp && operationType !== 'Liaison froide' && operationType !== 'Remise en T°C') :
-                        (temp < 63 && operationType !== 'Liaison froide' && operationType !== 'Remise en T°C')
-                ) && styles.tempControlRed
-            ]}
-        />
-    );
+    const renderTempControl = (temp, setTemp, isEndTemp = false) => {
+        const isCoolingOperation = operationType === 'Refroidissement';
+        const isColdLinkOrReheating = operationType === 'Liaison froide' || operationType === 'Remise en T°C';
+
+        const isInvalidTemperature = isEndTemp
+            ? ((temp < startTemp && !isColdLinkOrReheating && !isCoolingOperation) || // Cas général
+                (temp > startTemp && isCoolingOperation)) // Cas du refroidissement
+            : (temp < 63 && !isColdLinkOrReheating); // Validation de la température de début
+
+        return (
+            <CounterInput
+                horizontal={true}
+                increaseButtonBackgroundColor="#008170"
+                decreaseButtonBackgroundColor="#008170"
+                min={isColdLinkOrReheating ? undefined : 0}
+                initial={isColdLinkOrReheating ? 0 : 63}
+                value={temp}
+                onChange={(counter) => setTemp(counter)}
+                reverseCounterButtons
+                style={[
+                    styles.tempControl,
+                    isInvalidTemperature && styles.tempControlRed
+                ]}
+            />
+        );
+    };
 
     const handleStartDateTimeChange = (dateTime) => {
         console.log('Start DateTime changed:', dateTime);

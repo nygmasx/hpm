@@ -1,20 +1,52 @@
-import React, {useState, useContext, useEffect} from 'react';
-import {SafeAreaView, StyleSheet, Text, View, ScrollView, Alert, Dimensions} from "react-native";
-import {AntDesign, FontAwesome} from "@expo/vector-icons";
+import React, { useState, useContext, useEffect } from 'react';
+import {
+    SafeAreaView,
+    StyleSheet,
+    Text,
+    View,
+    ScrollView,
+    Alert,
+    Dimensions
+} from "react-native";
+import { AntDesign, FontAwesome } from "@expo/vector-icons";
+import { CheckBox } from "@rneui/base";
+import CounterInput from "react-native-counter-input";
+import Toast from "react-native-toast-message";
 import CustomButton from "../../components/CustomButton";
 import DateTimeField from "../../components/DateTimeField";
-import {CheckBox} from "@rneui/base";
-import CounterInput from "react-native-counter-input";
 import axiosConfig from "../../helpers/axiosConfig";
-import {AuthContext} from "../../context/AuthProvider";
-import Toast from "react-native-toast-message";
+import { AuthContext } from "../../context/AuthProvider";
 
-const {width, height} = Dimensions.get('window');
-const scale = Math.min(width, height) / 375;
-const responsiveSize = (size) => size * scale;
+const { width, height } = Dimensions.get('window');
 
-const TcpEdit = ({route, navigation}) => {
-    const {user} = useContext(AuthContext);
+// Constants for styling and configuration
+const COLORS = {
+    primary: '#008170',
+    border: '#E5E5E5',
+    text: '#333',
+    uncheckedIcon: '#8F9098',
+    errorBackground: '#FFCCCB',
+    white: '#fff',
+    transparent: 'transparent'
+};
+
+const FONT_SIZES = {
+    header: width * 0.045,
+    title: width * 0.06,
+    normal: width * 0.035
+};
+
+const SPACING = {
+    padding: width * 0.04,
+    marginBottom: height * 0.02,
+    smallMargin: height * 0.01,
+    tinyMargin: height * 0.005
+};
+
+const CORRECTIVE_ACTIONS = ['Opération prolongée', 'Produit jeté', 'Réduction durée de vie produit'];
+
+const TcpEdit = ({ route, navigation }) => {
+    const { user } = useContext(AuthContext);
     const [tcp, setTcp] = useState(null);
     const [showEndProcess, setShowEndProcess] = useState(false);
     const [startTemp, setStartTemp] = useState(null);
@@ -26,23 +58,11 @@ const TcpEdit = ({route, navigation}) => {
     const [selectedProducts, setSelectedProducts] = useState([]);
     const [operationType, setOperationType] = useState('');
     const [additionalInfo, setAdditionalInfo] = useState('');
-    const [styles, setStyles] = useState(createStyles(width, height));
 
-    const {id} = route.params;
+    const { id } = route.params;
 
     useEffect(() => {
         fetchTcpData();
-
-        const updateStyles = () => {
-            const {width, height} = Dimensions.get('window');
-            setStyles(createStyles(width, height));
-        };
-
-        Dimensions.addEventListener('change', updateStyles);
-
-        return () => {
-            Dimensions.removeEventListener('change', updateStyles);
-        };
     }, [id]);
 
     const fetchTcpData = async () => {
@@ -57,7 +77,6 @@ const TcpEdit = ({route, navigation}) => {
 
             setStartTemp(parsedStartTemp);
             setEndTemp(parsedEndTemp);
-
             setStartDateTime(tcpData.start_date);
             setEndDateTime(tcpData.end_date);
             setShowEndProcess(!!tcpData.end_date);
@@ -74,28 +93,32 @@ const TcpEdit = ({route, navigation}) => {
     };
 
     const getActionIndex = (action) => {
-        const actions = ['Opération prolongée', 'Produit jeté', 'Réduction durée de vie produit'];
-        return actions.indexOf(action);
+        return CORRECTIVE_ACTIONS.indexOf(action);
     };
 
     const renderTempControl = (temp, setTemp, isEndTemp = false) => {
+        const isCoolingOperation = operationType === 'Refroidissement';
+        const isColdLinkOrReheating = operationType === 'Liaison froide' || operationType === 'Remise en T°C';
+
+        const isInvalidTemperature = isEndTemp
+            ? ((temp < startTemp && !isColdLinkOrReheating && !isCoolingOperation) || // Cas général
+                (temp > startTemp && isCoolingOperation)) // Cas du refroidissement
+            : (temp < 63 && !isColdLinkOrReheating); // Validation de la température de début
+
         return (
             <CounterInput
                 horizontal={true}
                 increaseButtonBackgroundColor="#008170"
                 decreaseButtonBackgroundColor="#008170"
+                min={isColdLinkOrReheating ? undefined : 0}
+                initial={isColdLinkOrReheating ? 0 : 63}
+                value={temp}
+                onChange={(counter) => setTemp(counter)}
+                reverseCounterButtons
                 style={[
                     styles.tempControl,
-                    (isEndTemp ?
-                            (temp < startTemp && operationType !== 'Liaison froide' && operationType !== 'Remise en T°C') :
-                            (temp < 63 && operationType !== 'Liaison froide' && operationType !== 'Remise en T°C')
-                    ) && styles.tempControlRed
+                    isInvalidTemperature && styles.tempControlRed
                 ]}
-                min={operationType === 'Liaison froide' || operationType === 'Remise en T°C' ? undefined : 0}
-                initial={temp}
-                value={temp}
-                onChange={setTemp}
-                reverseCounterButtons
             />
         );
     };
@@ -109,40 +132,46 @@ const TcpEdit = ({route, navigation}) => {
             Alert.alert(
                 "Date de fin invalide",
                 "La date et l'heure de fin doivent être postérieures à la date et l'heure de début.",
-                [{text: "OK"}]
+                [{ text: "OK" }]
             );
         } else {
             setEndDateTime(dateTime);
         }
     };
 
-    const handleSubmit = async () => {
+    const validateSubmission = () => {
         if (selectedProducts.length === 0) {
             Alert.alert(
                 "Aucun produit sélectionné",
                 "Veuillez sélectionner au moins un produit avant de soumettre.",
-                [{text: "OK"}]
+                [{ text: "OK" }]
             );
-            return;
+            return false;
         }
 
         if (!startDateTime) {
             Alert.alert(
                 "Date de début invalide",
                 "Veuillez sélectionner une date et heure de début valides.",
-                [{text: "OK"}]
+                [{ text: "OK" }]
             );
-            return;
+            return false;
         }
 
         if (showEndProcess && (!endDateTime || new Date(endDateTime) <= new Date(startDateTime))) {
             Alert.alert(
                 "Date de fin invalide",
                 "La date et l'heure de fin doivent être postérieures à la date et l'heure de début.",
-                [{text: "OK"}]
+                [{ text: "OK" }]
             );
-            return;
+            return false;
         }
+
+        return true;
+    };
+
+    const handleSubmit = async () => {
+        if (!validateSubmission()) return;
 
         setIsLoading(true);
 
@@ -154,7 +183,7 @@ const TcpEdit = ({route, navigation}) => {
                 additional_informations: additionalInfo || '',
                 start_date: startDateTime,
                 start_temperature: startTemp.toString(),
-                products: selectedProducts.map(product => ({product_id: product.productId})),
+                products: selectedProducts.map(product => ({ product_id: product.productId })),
             };
 
             if (endDateTime && endTemp !== null) {
@@ -164,12 +193,12 @@ const TcpEdit = ({route, navigation}) => {
             } else {
                 data.is_finished = false;
                 if (selectedAction !== null) {
-                    data.corrective_action = ['Opération prolongée', 'Produit jeté', 'Réduction durée de vie produit'][selectedAction];
+                    data.corrective_action = CORRECTIVE_ACTIONS[selectedAction];
                 }
             }
 
             axiosConfig.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
-            const response = await axiosConfig.put(`/temperatures-changement/${id}/edit`, data, {
+            await axiosConfig.put(`/temperatures-changement/${id}/edit`, data, {
                 headers: {
                     'Content-Type': 'application/json',
                 }
@@ -179,7 +208,7 @@ const TcpEdit = ({route, navigation}) => {
                 type: 'success',
                 text1: 'Tcp modifié avec succès 🟢',
             });
-            navigation.navigate('Tcp', {tcpUpdated: true});
+            navigation.navigate('Tcp', { tcpUpdated: true });
         } catch (error) {
             console.error('Error updating TCP:', error);
             let errorMessage = 'Une erreur est survenue lors de la modification du TCP';
@@ -194,19 +223,31 @@ const TcpEdit = ({route, navigation}) => {
         }
     };
 
+    const renderCheckbox = ({ title, checked, onPress, containerStyle }) => (
+        <CheckBox
+            title={title}
+            checked={checked}
+            onPress={onPress}
+            checkedIcon={<AntDesign name="checkcircle" size={24} color={COLORS.primary} />}
+            uncheckedIcon={<FontAwesome name="circle-o" size={24} color={COLORS.uncheckedIcon} />}
+            containerStyle={[styles.baseCheckbox, containerStyle]}
+            textStyle={styles.checkboxText}
+        />
+    );
+
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.headerContainer}>
-                    <Text style={styles.headerText}>
-                        {operationType}
-                    </Text>
+                    <Text style={styles.headerText}>{operationType}</Text>
                 </View>
 
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Produits sélectionnés</Text>
                     {selectedProducts.map((product, index) => (
-                        <Text key={index} style={styles.productItem}>{product.productName}</Text>
+                        <Text key={index} style={styles.productItem}>
+                            {product.productName}
+                        </Text>
                     ))}
                 </View>
 
@@ -223,17 +264,11 @@ const TcpEdit = ({route, navigation}) => {
                     {startTemp !== null && renderTempControl(startTemp, setStartTemp, false)}
                 </View>
 
-                <View style={styles.section}>
-                    <CheckBox
-                        title="Renseigner la fin du processus maintenant"
-                        checked={showEndProcess}
-                        onPress={() => setShowEndProcess(!showEndProcess)}
-                        checkedIcon={<AntDesign name="checkcircle" size={responsiveSize(24)} color="#008170"/>}
-                        uncheckedIcon={<FontAwesome name="circle-o" size={responsiveSize(24)} color="#8F9098"/>}
-                        containerStyle={styles.checkboxContainer}
-                        textStyle={styles.checkboxText}
-                    />
-                </View>
+                {renderCheckbox({
+                    title: "Renseigner la fin du processus maintenant",
+                    checked: showEndProcess,
+                    onPress: () => setShowEndProcess(!showEndProcess)
+                })}
 
                 {showEndProcess && (
                     <>
@@ -255,17 +290,14 @@ const TcpEdit = ({route, navigation}) => {
                 {!showEndProcess && (
                     <View style={styles.section}>
                         <Text style={styles.actionTitle}>Actions correctives</Text>
-                        {['Opération prolongée', 'Produit jeté', 'Réduction durée de vie produit'].map((action, index) => (
-                            <CheckBox
-                                key={index}
-                                title={action}
-                                checked={selectedAction === index}
-                                onPress={() => setSelectedAction(index)}
-                                checkedIcon={<AntDesign name="checkcircle" size={responsiveSize(24)} color="#008170"/>}
-                                uncheckedIcon={<FontAwesome name="circle-o" size={responsiveSize(24)} color="#8F9098"/>}
-                                containerStyle={styles.actionCheckbox}
-                                textStyle={styles.actionText}
-                            />
+                        {CORRECTIVE_ACTIONS.map((action, index) => (
+                            renderCheckbox({
+                                key: index,
+                                title: action,
+                                checked: selectedAction === index,
+                                onPress: () => setSelectedAction(index),
+                                containerStyle: styles.actionCheckbox
+                            })
                         ))}
                     </View>
                 )}
@@ -289,99 +321,76 @@ const TcpEdit = ({route, navigation}) => {
     );
 };
 
-const createStyles = (width, height) => StyleSheet.create({
+const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: 'white',
+        backgroundColor: COLORS.white,
     },
     scrollContent: {
         flexGrow: 1,
-        padding: responsiveSize(16),
+        padding: SPACING.padding,
     },
     headerContainer: {
         borderWidth: 1,
-        borderColor: '#E5E5E5',
-        borderRadius: responsiveSize(16),
-        padding: responsiveSize(12),
-        marginBottom: responsiveSize(16),
-        backgroundColor: 'white',
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 2,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 3,
-        elevation: 3,
+        borderColor: COLORS.border,
+        borderRadius: 16,
+        padding: SPACING.smallMargin,
+        marginBottom: SPACING.marginBottom,
     },
     headerText: {
-        fontSize: responsiveSize(18),
+        fontSize: FONT_SIZES.header,
         fontWeight: 'bold',
         textAlign: 'center',
-        includeFontPadding: false,
     },
     section: {
-        marginBottom: responsiveSize(16),
+        marginBottom: SPACING.marginBottom,
     },
     sectionTitle: {
-        fontSize: responsiveSize(16),
+        fontSize: FONT_SIZES.title,
         fontWeight: 'bold',
-        marginBottom: responsiveSize(8),
-        includeFontPadding: false,
+        marginBottom: SPACING.smallMargin,
     },
     productItem: {
         textAlign: 'center',
-        fontSize: responsiveSize(14),
-        marginBottom: responsiveSize(4),
-        includeFontPadding: false,
+        fontSize: FONT_SIZES.normal,
+        marginBottom: SPACING.tinyMargin,
     },
-    checkboxContainer: {
-        backgroundColor: 'transparent',
+    baseCheckbox: {
+        backgroundColor: COLORS.transparent,
         borderWidth: 0,
         padding: 0,
         marginLeft: 0,
     },
     checkboxText: {
         fontWeight: 'normal',
-        fontSize: responsiveSize(14),
-        includeFontPadding: false,
+        fontSize: FONT_SIZES.normal,
     },
     actionTitle: {
-        fontSize: responsiveSize(16),
+        fontSize: FONT_SIZES.title,
         fontWeight: 'bold',
-        marginBottom: responsiveSize(8),
-        includeFontPadding: false,
+        marginBottom: SPACING.smallMargin,
     },
     actionCheckbox: {
-        backgroundColor: 'transparent',
-        borderWidth: 0,
-        padding: 0,
-        marginLeft: 0,
-        marginBottom: responsiveSize(4),
-    },
-    actionText: {
-        fontWeight: 'normal',
-        fontSize: responsiveSize(14),
-        includeFontPadding: false,
+        marginBottom: SPACING.tinyMargin,
     },
     buttonContainer: {
-        padding: responsiveSize(16),
-        paddingBottom: responsiveSize(20),
+        padding: SPACING.padding,
+        paddingBottom: height * 0.05,
     },
     additionalInfo: {
-        fontSize: responsiveSize(14),
-        color: '#333',
-        includeFontPadding: false,
+        fontSize: FONT_SIZES.normal,
+        color: COLORS.text,
     },
     tempControl: {
-        borderRadius: responsiveSize(12),
-        height: responsiveSize(64),
+        width: '100%',
+        borderRadius: 12,
+        height: height * 0.07,
         borderWidth: 1,
-        borderColor: '#C5C6CC',
+        borderColor: COLORS.border,
     },
-    tempControlRed: {
-        backgroundColor: '#FFCCCB',
-    },
+    tempControlError: {
+        backgroundColor: COLORS.errorBackground,
+    }
 });
 
 export default TcpEdit;

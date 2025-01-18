@@ -43,7 +43,6 @@ const TracabiliteFirst = ({navigation, route}) => {
         Toast.show({
             type: 'success',
             text1: 'Traçabilité confirmé 🟢',
-            text2: 'This is some something 👋'
         });
     }
 
