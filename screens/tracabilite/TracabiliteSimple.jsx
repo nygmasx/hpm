@@ -90,7 +90,7 @@ const TracabiliteSimple = ({ navigation }) => {
     };
 
     const handleDateTimeChange = (dateTime) => {
-        console.log('DateTime changed:', dateTime);
+        console.log('DateTime changed: ', dateTime);
         setOpenedAt(dateTime);
     };
 

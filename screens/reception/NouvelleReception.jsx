@@ -9,7 +9,7 @@ import {
     KeyboardAvoidingView,
     Dimensions,
     Platform,
-    TouchableOpacity
+    TouchableOpacity, Alert
 } from "react-native";
 import FormField from "../../components/FormField";
 import DateTimeField from "../../components/DateTimeField";
@@ -20,6 +20,9 @@ import axiosConfig from "../../helpers/axiosConfig";
 import { AuthContext } from "../../context/AuthProvider";
 import Toast from "react-native-toast-message";
 import Modal from "react-native-modal";
+import {AntDesign, FontAwesome} from "@expo/vector-icons";
+import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
 
 const { width, height } = Dimensions.get('window');
 
@@ -36,6 +39,7 @@ const NouvelleReception = ({ navigation }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [isSupplierModalVisible, setIsSupplierModalVisible] = useState(false);
     const [supplierName, setSupplierName] = useState('');
+    const [image, setImage] = useState()
     const { user, token } = useContext(AuthContext);
 
     const serviceOptions = useMemo(() => ['Matin', 'Midi', 'Soir', 'Indifférent'], []);
@@ -130,6 +134,25 @@ const NouvelleReception = ({ navigation }) => {
         setIsSupplierModalVisible(!isSupplierModalVisible)
     }
 
+    const takePhoto = async () => {
+        const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+
+        if (permissionResult.granted === false) {
+            Alert.alert("Permission refusée", "Vous avez refusé l'accès à la caméra.");
+            return;
+        }
+
+        const result = await ImagePicker.launchCameraAsync({
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 1,
+        });
+
+        if (!result.canceled) {
+            setImage(result.assets[0].uri);
+        }
+    };
+
     return (
         <SafeAreaView style={styles.container}>
             <Modal isVisible={isSupplierModalVisible}>
@@ -169,6 +192,9 @@ const NouvelleReception = ({ navigation }) => {
                                             onChangeText={(text) => handleInputChange('reference', text)}
                                         />
                                     </View>
+                                    <TouchableOpacity style={styles.cameraButton} onPress={() => takePhoto()}>
+                                        <FontAwesome name="camera" size={20} color="white" />
+                                    </TouchableOpacity>
                                 </View>
                             </View>
                         </View>
@@ -256,7 +282,7 @@ const styles = StyleSheet.create({
     referenceInput: {
         borderWidth: 1,
         borderColor: '#C5C6CC',
-        width: '100%',
+        width: '85%',
         height: height * 0.07,
         paddingHorizontal: width * 0.04,
         borderRadius: 12,
@@ -317,6 +343,14 @@ const styles = StyleSheet.create({
         alignItems: "baseline",
         gap: 10,
         marginBottom: height * 0.005,
+    },
+    cameraButton: {
+        borderRadius: 22.5,
+        width: 45,
+        height: 45,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#008170',
     },
     addButton: {
         padding: 5,

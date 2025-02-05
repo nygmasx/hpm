@@ -1,7 +1,6 @@
 import React, { createContext, useState } from "react";
 import * as SecureStore from 'expo-secure-store';
 import axiosConfig from "../helpers/axiosConfig";
-import { Platform } from "react-native";
 
 export const AuthContext = createContext();
 const AuthProvider = ({children}) => {

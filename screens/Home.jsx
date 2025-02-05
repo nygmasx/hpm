@@ -9,13 +9,13 @@ import CreateStackNavigator from "@react-navigation/stack/src/navigators/createS
 
 const Stack = CreateStackNavigator()
 
-const Home = ({ navigation, route }) => {
+const Home = ({ navigation }) => {
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView>
                 <View style={styles.content}>
                     <LinkModal image={backgrounds.tracabilite} title="Traçabilité" navigation={navigation} route={"Tracabilite"}/>
-                    <LinkModal image={backgrounds.temperature} title="Température" navigation={navigation} route={"Temperature"}/>
+                    <LinkModal image={backgrounds.temperature} title="Relevé de Température" navigation={navigation} route={"Temperature"}/>
                     <LinkModal image={backgrounds.nettoyage} title="Plan de nettoyage" navigation={navigation} route={"Zones de nettoyage"}/>
                     <LinkModal image={backgrounds.reception} title="Réception" navigation={navigation} route={"Reception"}/>
                     <LinkModal image={backgrounds.huile} title="Huiles" navigation={navigation} route={"Huile"}/>

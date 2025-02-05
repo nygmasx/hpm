@@ -1,36 +1,42 @@
-import React, { useContext, useState, useEffect } from 'react';
-import { SafeAreaView, StyleSheet, Text, TouchableOpacity, View, ScrollView, Alert, Dimensions } from "react-native";
-import { Searchbar } from "react-native-paper";
-import { AntDesign } from "@expo/vector-icons";
+import React, {useContext, useState, useEffect} from 'react';
+import {SafeAreaView, StyleSheet, Text, TouchableOpacity, View, ScrollView, Alert, Dimensions} from "react-native";
+import {Searchbar} from "react-native-paper";
+import {AntDesign} from "@expo/vector-icons";
 import CustomButton from "../../components/CustomButton";
-import { SelectList } from "react-native-dropdown-select-list";
+import {SelectList} from "react-native-dropdown-select-list";
 import FormField from "../../components/FormField";
 import axiosConfig from "../../helpers/axiosConfig";
-import { AuthContext } from "../../context/AuthProvider";
+import {AuthContext} from "../../context/AuthProvider";
 import CheckBox from "expo-checkbox";
 import Toast from "react-native-toast-message";
 import Modal from "react-native-modal";
 
-const { width, height } = Dimensions.get('window');
+const {width, height} = Dimensions.get('window');
 
-const TcProduit = ({ navigation }) => {
+const TcProduit = ({navigation}) => {
     const [products, setProducts] = useState([]);
     const [productName, setProductName] = useState('');
     const [selectedProducts, setSelectedProducts] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const { user } = useContext(AuthContext);
+    const {user} = useContext(AuthContext);
     const [checkedProducts, setCheckedProducts] = useState({});
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedOperation, setSelectedOperation] = useState(null);
+    const [selectedStorageZone, setSelectedStorageZone] = useState(null);
     const [additionalInfo, setAdditionalInfo] = useState('');
 
     const data = [
-        { key: '1', value: 'Liaison chaude' },
-        { key: '2', value: 'Liaison froide' },
-        { key: '3', value: 'Refroidissement' },
-        { key: '4', value: 'Remise en T°C' },
-        { key: '5', value: 'Température service chaud' },
+        {key: '1', value: 'Liaison chaude'},
+        {key: '2', value: 'Liaison froide'},
+        {key: '3', value: 'Refroidissement'},
+        {key: '4', value: 'Remise en T°C'},
+        {key: '5', value: 'Température service chaud'},
+    ];
+
+    const zoneData = [
+        {key: '1', value: 'Chambre froide positive'},
+        {key: '2', value: 'Frigo'},
     ];
 
     useEffect(() => {
@@ -78,7 +84,7 @@ const TcProduit = ({ navigation }) => {
 
     const handleCheckboxChange = (productId, productName) => {
         setCheckedProducts(prevState => {
-            const newCheckedProducts = { ...prevState, [productId]: !prevState[productId] };
+            const newCheckedProducts = {...prevState, [productId]: !prevState[productId]};
             return newCheckedProducts;
         });
 
@@ -86,7 +92,7 @@ const TcProduit = ({ navigation }) => {
             if (prevProducts.some(p => p.productId === productId)) {
                 return prevProducts.filter(p => p.productId !== productId);
             } else {
-                return [...prevProducts, { productId, productName }];
+                return [...prevProducts, {productId, productName}];
             }
         });
     };
@@ -124,7 +130,7 @@ const TcProduit = ({ navigation }) => {
                     <View style={styles.modalHeader}>
                         <Text style={styles.modalTitle}>Ajouter un produit</Text>
                         <View style={styles.formField}>
-                            <FormField title="Nom du produit" value={productName} handleChangeText={setProductName} />
+                            <FormField title="Nom du produit" value={productName} handleChangeText={setProductName}/>
                         </View>
                     </View>
                     <View style={styles.modalButtons}>
@@ -151,7 +157,7 @@ const TcProduit = ({ navigation }) => {
                     </View>
 
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Produits réceptionnés</Text>
+                        <Text style={styles.sectionTitle}>Produits</Text>
                         <View style={styles.searchContainer}>
                             <Searchbar
                                 style={styles.searchBar}
@@ -160,7 +166,7 @@ const TcProduit = ({ navigation }) => {
                                 value={searchQuery}
                             />
                             <TouchableOpacity onPress={toggleModal} style={styles.addButton}>
-                                <AntDesign name="plus" size={24} color="white" />
+                                <AntDesign name="plus" size={24} color="white"/>
                             </TouchableOpacity>
                         </View>
                         <ScrollView style={styles.productList}>
@@ -183,6 +189,17 @@ const TcProduit = ({ navigation }) => {
                                 </TouchableOpacity>
                             ))}
                         </ScrollView>
+                    </View>
+
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Où stocker le produit ?</Text>
+                        <SelectList
+                            setSelected={(val) => setSelectedStorageZone(val)}
+                            data={zoneData}
+                            save="value"
+                            boxStyles={styles.select}
+                            placeholder="Sélectionner une option"
+                        />
                     </View>
 
                     <FormField

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState, useRef } from 'react';
+import React, {useContext, useEffect, useState, useRef} from 'react';
 import {
     SafeAreaView,
     Text,
@@ -9,17 +9,17 @@ import {
     TouchableOpacity,
 } from "react-native";
 import ActionModal from "../../components/ActionModal";
-import { Divider } from "@rneui/themed";
+import {Divider} from "@rneui/themed";
 import axiosConfig from "../../helpers/axiosConfig";
-import { AuthContext } from "../../context/AuthProvider";
+import {AuthContext} from "../../context/AuthProvider";
 
-const { width, height } = Dimensions.get('window');
+const {width, height} = Dimensions.get('window');
 
 const TWO_HOURS_IN_SECONDS = 7200;
 
-const Tcp = ({ navigation, route }) => {
+const Tcp = ({navigation, route}) => {
     const [tcps, setTcps] = useState([]);
-    const { user } = useContext(AuthContext);
+    const {user} = useContext(AuthContext);
     const [remainingTime, setRemainingTime] = useState({});
     const timerRefs = useRef({});
 
@@ -29,7 +29,7 @@ const Tcp = ({ navigation, route }) => {
         const unsubscribe = navigation.addListener('focus', () => {
             if (route.params?.newTcpCreated) {
                 fetchUserTcps();
-                navigation.setParams({ newTcpCreated: false });
+                navigation.setParams({newTcpCreated: false});
             }
         });
 
@@ -57,7 +57,7 @@ const Tcp = ({ navigation, route }) => {
                 const elapsedTime = Math.floor((currentTime - startTime) / 1000);
                 const remainingTimeInSeconds = Math.max(TWO_HOURS_IN_SECONDS - elapsedTime, 0);
 
-                setRemainingTime(prev => ({ ...prev, [tcp.id]: remainingTimeInSeconds }));
+                setRemainingTime(prev => ({...prev, [tcp.id]: remainingTimeInSeconds}));
                 startTimer(tcp.id, remainingTimeInSeconds);
             }
         });
@@ -73,9 +73,9 @@ const Tcp = ({ navigation, route }) => {
                 const updatedTime = prev[tcpId] - 1;
                 if (updatedTime <= 0) {
                     clearInterval(timerRefs.current[tcpId]);
-                    return { ...prev, [tcpId]: 0 };
+                    return {...prev, [tcpId]: 0};
                 }
-                return { ...prev, [tcpId]: updatedTime };
+                return {...prev, [tcpId]: updatedTime};
             });
         }, 1000);
     };
@@ -88,7 +88,7 @@ const Tcp = ({ navigation, route }) => {
     };
 
     const handlePress = (id) => {
-        navigation.navigate('Modifier Tcp', { id });
+        navigation.navigate('Modifier Tcp', {id});
     }
 
     return (
@@ -102,14 +102,15 @@ const Tcp = ({ navigation, route }) => {
                         subtitle="Démarrer un changement de température"
                         icon="barcode-sharp"
                     />
-                    <Divider />
+                    <Divider/>
                 </View>
                 {tcps.length > 0 && (
                     <View style={styles.bottomSection}>
                         <Text style={styles.title}>Opérations en cours</Text>
                         <View style={styles.imageContainer}>
                             {tcps.map(tcp => (
-                                <TouchableOpacity onPress={() => handlePress(tcp.id)} key={tcp.id} style={styles.productItem}>
+                                <TouchableOpacity onPress={() => handlePress(tcp.id)} key={tcp.id}
+                                                  style={styles.productItem}>
                                     <View>
                                         <Text style={styles.productName}>{tcp.operation_type}</Text>
                                         <Text style={styles.productSubtext}>
