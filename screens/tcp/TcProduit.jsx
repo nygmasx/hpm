@@ -23,7 +23,7 @@ const TcProduit = ({navigation}) => {
     const [checkedProducts, setCheckedProducts] = useState({});
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedOperation, setSelectedOperation] = useState(null);
-    const [selectedStorageZone, setSelectedStorageZone] = useState(null);
+    const [selectedStorageLocation, setSelectedStorageLocation] = useState(null);
     const [additionalInfo, setAdditionalInfo] = useState('');
 
     const data = [
@@ -116,9 +116,15 @@ const TcProduit = ({navigation}) => {
             return;
         }
 
+        if (!selectedStorageLocation) {
+            Alert.alert("Erreur", "Veuillez sélectionner où stocker le produit durant l'opération.");
+            return;
+        }
+
         navigation.navigate('TcpOperation', {
             selectedProducts,
             operationType: selectedOperation,
+            storageLocation: selectedStorageLocation,
             additionalInfo
         });
     };
@@ -194,7 +200,7 @@ const TcProduit = ({navigation}) => {
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Où stocker le produit ?</Text>
                         <SelectList
-                            setSelected={(val) => setSelectedStorageZone(val)}
+                            setSelected={(val) => setSelectedStorageLocation(val)}
                             data={zoneData}
                             save="value"
                             boxStyles={styles.select}

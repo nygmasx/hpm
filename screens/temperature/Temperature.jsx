@@ -1,5 +1,15 @@
 import React, {useContext, useEffect, useState} from 'react';
-import {FlatList, SafeAreaView, Text, TextInput, TouchableOpacity, View, Dimensions, StyleSheet} from "react-native";
+import {
+    FlatList,
+    SafeAreaView,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    View,
+    Dimensions,
+    StyleSheet,
+    Alert
+} from "react-native";
 import DateTimeField from "../../components/DateTimeField";
 import {AntDesign, FontAwesome} from "@expo/vector-icons";
 import CheckBox from "expo-checkbox";
@@ -103,6 +113,22 @@ const Temperature = ({navigation}) => {
         const formData = new FormData();
         formData.append('name', equipmentName);
         formData.append('type', selectedType);
+
+        if (!equipmentName) {
+            Toast.show({
+                type: 'error',
+                text1: "Veuillez renseigner un nom pour l'équipement",
+            });
+            return false;
+        }
+
+        if (!selectedType) {
+            Toast.show({
+                type: 'error',
+                text1: "Veuillez choisir un type d'équipement",
+            });
+            return false;
+        }
 
         try {
             axiosConfig.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;

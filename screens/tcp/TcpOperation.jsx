@@ -20,16 +20,19 @@ const TcpOperation = ({ route, navigation }) => {
     const [endDateTime, setEndDateTime] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
-    const { selectedProducts, operationType, additionalInfo } = route.params;
+    const { selectedProducts, operationType, storageLocation, additionalInfo } = route.params;
+
+    // Vérifier si c'est une opération avec timer
+    const isTimedOperation = operationType === 'Refroidissement' || operationType === 'Remise en T°C';
 
     const renderTempControl = (temp, setTemp, isEndTemp = false) => {
         const isCoolingOperation = operationType === 'Refroidissement';
         const isColdLinkOrReheating = operationType === 'Liaison froide' || operationType === 'Remise en T°C';
 
         const isInvalidTemperature = isEndTemp
-            ? ((temp < startTemp && !isColdLinkOrReheating && !isCoolingOperation) || // Cas général
-                (temp > startTemp && isCoolingOperation)) // Cas du refroidissement
-            : (temp < 63 && !isColdLinkOrReheating); // Validation de la température de début
+            ? ((temp < startTemp && !isColdLinkOrReheating && !isCoolingOperation) ||
+                (temp > startTemp && isCoolingOperation))
+            : (temp < 63 && !isColdLinkOrReheating);
 
         return (
             <CounterInput
@@ -50,12 +53,10 @@ const TcpOperation = ({ route, navigation }) => {
     };
 
     const handleStartDateTimeChange = (dateTime) => {
-        console.log('Start DateTime changed:', dateTime);
         setStartDateTime(dateTime);
     };
 
     const handleEndDateTimeChange = (dateTime) => {
-        console.log('End DateTime changed:', dateTime);
         if (new Date(dateTime) <= new Date(startDateTime)) {
             Alert.alert(
                 "Date de fin invalide",
@@ -86,7 +87,7 @@ const TcpOperation = ({ route, navigation }) => {
             return;
         }
 
-        if (showEndProcess && (!endDateTime || new Date(endDateTime) <= new Date(startDateTime))) {
+        if (!isTimedOperation && showEndProcess && (!endDateTime || new Date(endDateTime) <= new Date(startDateTime))) {
             Alert.alert(
                 "Date de fin invalide",
                 "La date et l'heure de fin doivent être postérieures à la date et l'heure de début.",
@@ -101,28 +102,25 @@ const TcpOperation = ({ route, navigation }) => {
             const data = {
                 user_id: user.id,
                 operation_type: operationType,
+                storage_location: storageLocation,
                 date: startDateTime,
                 additional_informations: additionalInfo || '',
                 start_date: startDateTime,
                 start_temperature: startTemp.toString(),
-                is_finished: showEndProcess ? '1' : '0',
+                is_finished: '0',
                 products: selectedProducts.map(product => ({ product_id: product.productId })),
             };
 
-            if (showEndProcess) {
+            if (!isTimedOperation && showEndProcess) {
                 if (!endDateTime) {
                     throw new Error("Date de fin invalide");
                 }
+                data.is_finished = '1';
                 data.end_date = endDateTime;
                 data.end_temperature = endTemp.toString();
-            } else {
-                data.is_finished = '0';  // Set is_finished to false when showEndProcess is false
-                if (selectedAction !== null) {
-                    data.corrective_action = ['Opération prolongée', 'Produit jeté', 'Réduction durée de vie produit'][selectedAction];
-                }
+            } else if (!isTimedOperation && selectedAction !== null) {
+                data.corrective_action = ['Opération prolongée', 'Produit jeté', 'Réduction durée de vie produit'][selectedAction];
             }
-
-            console.log('Submitting data:', JSON.stringify(data, null, 2));
 
             axiosConfig.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
             const response = await axiosConfig.post('/tcp/new', data, {
@@ -131,14 +129,11 @@ const TcpOperation = ({ route, navigation }) => {
                 }
             });
 
-            console.log('Response:', response.data);
             Alert.alert('Succès', 'Tcp créé avec succès');
             navigation.navigate('Tcp', { newTcpCreated: true });
         } catch (error) {
-            console.error('Error creating TCP:', error);
             let errorMessage = 'Une erreur est survenue lors de la création du TCP';
             if (error.response) {
-                console.error('Error response:', error.response.data);
                 errorMessage = error.response.data.message || errorMessage;
             } else if (error.message) {
                 errorMessage = error.message;
@@ -177,19 +172,21 @@ const TcpOperation = ({ route, navigation }) => {
                     {renderTempControl(startTemp, setStartTemp, false)}
                 </View>
 
-                <View style={styles.section}>
-                    <CheckBox
-                        title="Renseigner la fin du processus maintenant"
-                        checked={showEndProcess}
-                        onPress={() => setShowEndProcess(!showEndProcess)}
-                        checkedIcon={<AntDesign name="checkcircle" size={24} color="#008170"/>}
-                        uncheckedIcon={<FontAwesome name="circle-o" size={24} color="#8F9098"/>}
-                        containerStyle={styles.checkboxContainer}
-                        textStyle={styles.checkboxText}
-                    />
-                </View>
+                {!isTimedOperation && (
+                    <View style={styles.section}>
+                        <CheckBox
+                            title="Renseigner la fin du processus maintenant"
+                            checked={showEndProcess}
+                            onPress={() => setShowEndProcess(!showEndProcess)}
+                            checkedIcon={<AntDesign name="checkcircle" size={24} color="#008170"/>}
+                            uncheckedIcon={<FontAwesome name="circle-o" size={24} color="#8F9098"/>}
+                            containerStyle={styles.checkboxContainer}
+                            textStyle={styles.checkboxText}
+                        />
+                    </View>
+                )}
 
-                {showEndProcess && (
+                {!isTimedOperation && showEndProcess && (
                     <>
                         <View style={styles.section}>
                             <DateTimeField
@@ -200,12 +197,12 @@ const TcpOperation = ({ route, navigation }) => {
 
                         <View style={styles.section}>
                             <Text style={styles.sectionTitle}>Température de fin</Text>
-                            {renderTempControl(endTemp, setEndTemp, true, startTemp)}
+                            {renderTempControl(endTemp, setEndTemp, true)}
                         </View>
                     </>
                 )}
 
-                {!showEndProcess && (
+                {!isTimedOperation && !showEndProcess && (
                     <View style={styles.section}>
                         <Text style={styles.actionTitle}>Actions correctives</Text>
                         {['Opération prolongée', 'Produit jeté', 'Réduction durée de vie produit'].map((action, index) => (
@@ -314,7 +311,7 @@ const styles = StyleSheet.create({
         shadowColor: 'none'
     },
     tempControlRed: {
-        backgroundColor: '#FFCCCB', // Light red background
+        backgroundColor: '#FFCCCB',
     },
 });
 

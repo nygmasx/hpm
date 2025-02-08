@@ -19,7 +19,6 @@ import { AuthContext } from "../../context/AuthProvider";
 
 const { width, height } = Dimensions.get('window');
 
-// Constants for styling and configuration
 const COLORS = {
     primary: '#008170',
     border: '#E5E5E5',
@@ -101,9 +100,9 @@ const TcpEdit = ({ route, navigation }) => {
         const isColdLinkOrReheating = operationType === 'Liaison froide' || operationType === 'Remise en T°C';
 
         const isInvalidTemperature = isEndTemp
-            ? ((temp < startTemp && !isColdLinkOrReheating && !isCoolingOperation) || // Cas général
-                (temp > startTemp && isCoolingOperation)) // Cas du refroidissement
-            : (temp < 63 && !isColdLinkOrReheating); // Validation de la température de début
+            ? ((temp < startTemp && !isColdLinkOrReheating && !isCoolingOperation) ||
+                (temp > startTemp && isCoolingOperation))
+            : (temp < 63 && !isColdLinkOrReheating);
 
         return (
             <CounterInput
@@ -245,7 +244,7 @@ const TcpEdit = ({ route, navigation }) => {
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Produits sélectionnés</Text>
                     {selectedProducts.map((product, index) => (
-                        <Text key={index} style={styles.productItem}>
+                        <Text key={`product-${product.productId}-${index}`} style={styles.productItem}>
                             {product.productName}
                         </Text>
                     ))}
@@ -264,11 +263,13 @@ const TcpEdit = ({ route, navigation }) => {
                     {startTemp !== null && renderTempControl(startTemp, setStartTemp, false)}
                 </View>
 
-                {renderCheckbox({
-                    title: "Renseigner la fin du processus maintenant",
-                    checked: showEndProcess,
-                    onPress: () => setShowEndProcess(!showEndProcess)
-                })}
+                <View key="end-process-checkbox">
+                    {renderCheckbox({
+                        title: "Renseigner la fin du processus maintenant",
+                        checked: showEndProcess,
+                        onPress: () => setShowEndProcess(!showEndProcess)
+                    })}
+                </View>
 
                 {showEndProcess && (
                     <>
@@ -291,13 +292,14 @@ const TcpEdit = ({ route, navigation }) => {
                     <View style={styles.section}>
                         <Text style={styles.actionTitle}>Actions correctives</Text>
                         {CORRECTIVE_ACTIONS.map((action, index) => (
-                            renderCheckbox({
-                                key: index,
-                                title: action,
-                                checked: selectedAction === index,
-                                onPress: () => setSelectedAction(index),
-                                containerStyle: styles.actionCheckbox
-                            })
+                            <View key={`action-${index}`}>
+                                {renderCheckbox({
+                                    title: action,
+                                    checked: selectedAction === index,
+                                    onPress: () => setSelectedAction(index),
+                                    containerStyle: styles.actionCheckbox
+                                })}
+                            </View>
                         ))}
                     </View>
                 )}

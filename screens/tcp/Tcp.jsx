@@ -7,6 +7,7 @@ import {
     Dimensions,
     ScrollView,
     TouchableOpacity,
+    Alert,
 } from "react-native";
 import ActionModal from "../../components/ActionModal";
 import {Divider} from "@rneui/themed";
@@ -16,6 +17,7 @@ import {AuthContext} from "../../context/AuthProvider";
 const {width, height} = Dimensions.get('window');
 
 const TWO_HOURS_IN_SECONDS = 7200;
+const ONE_HOUR_IN_SECONDS = 3600;
 
 const Tcp = ({navigation, route}) => {
     const [tcps, setTcps] = useState([]);
@@ -43,19 +45,31 @@ const Tcp = ({navigation, route}) => {
         try {
             const response = await axiosConfig.get(`/user/${user.id}/temperature-changement`);
             setTcps(response.data);
-            startTimersForCoolingOperations(response.data);
+            startTimersForOperations(response.data);
         } catch (error) {
             console.log(error);
         }
     };
 
-    const startTimersForCoolingOperations = (tcpData) => {
+    const getOperationDuration = (operationType) => {
+        switch (operationType) {
+            case 'Refroidissement':
+                return TWO_HOURS_IN_SECONDS;
+            case 'Remise en T°C':
+                return ONE_HOUR_IN_SECONDS;
+            default:
+                return 0;
+        }
+    };
+
+    const startTimersForOperations = (tcpData) => {
         tcpData.forEach(tcp => {
-            if (tcp.operation_type === 'Refroidissement' && tcp.is_finished === 0) {
+            if ((tcp.operation_type === 'Refroidissement' || tcp.operation_type === 'Remise en T°C') && tcp.is_finished === 0) {
                 const startTime = new Date(tcp.start_date).getTime();
                 const currentTime = new Date().getTime();
                 const elapsedTime = Math.floor((currentTime - startTime) / 1000);
-                const remainingTimeInSeconds = Math.max(TWO_HOURS_IN_SECONDS - elapsedTime, 0);
+                const operationDuration = getOperationDuration(tcp.operation_type);
+                const remainingTimeInSeconds = Math.max(operationDuration - elapsedTime, 0);
 
                 setRemainingTime(prev => ({...prev, [tcp.id]: remainingTimeInSeconds}));
                 startTimer(tcp.id, remainingTimeInSeconds);
@@ -87,8 +101,19 @@ const Tcp = ({navigation, route}) => {
         return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
     };
 
-    const handlePress = (id) => {
-        navigation.navigate('Modifier Tcp', {id});
+    const handlePress = (tcp) => {
+        const isTimedOperation = tcp.operation_type === 'Refroidissement' || tcp.operation_type === 'Remise en T°C';
+
+        if (isTimedOperation && remainingTime[tcp.id] > 0) {
+            Alert.alert(
+                "Opération en cours",
+                "Vous ne pouvez pas modifier cette opération tant que le timer n'est pas terminé.",
+                [{ text: "OK" }]
+            );
+            return;
+        }
+
+        navigation.navigate('Modifier Tcp', {id: tcp.id});
     }
 
     return (
@@ -109,21 +134,28 @@ const Tcp = ({navigation, route}) => {
                         <Text style={styles.title}>Opérations en cours</Text>
                         <View style={styles.imageContainer}>
                             {tcps.map(tcp => (
-                                <TouchableOpacity onPress={() => handlePress(tcp.id)} key={tcp.id}
-                                                  style={styles.productItem}>
+                                <TouchableOpacity
+                                    onPress={() => handlePress(tcp)}
+                                    key={tcp.id}
+                                    style={[
+                                        styles.productItem,
+                                        ((tcp.operation_type === 'Refroidissement' || tcp.operation_type === 'Remise en T°C') &&
+                                            remainingTime[tcp.id] > 0) && styles.productItemDisabled
+                                    ]}>
                                     <View>
                                         <Text style={styles.productName}>{tcp.operation_type}</Text>
                                         <Text style={styles.productSubtext}>
                                             {tcp.products.map(product => product.name).join(', ')}
                                         </Text>
-                                        {tcp.operation_type === 'Refroidissement' && remainingTime[tcp.id] !== undefined && (
-                                            <Text style={[
-                                                styles.timerText,
-                                                remainingTime[tcp.id] <= 0 ? styles.timerTextOverdue : null
-                                            ]}>
-                                                Temps restant: {formatTime(remainingTime[tcp.id])}
-                                            </Text>
-                                        )}
+                                        {(tcp.operation_type === 'Refroidissement' || tcp.operation_type === 'Remise en T°C') &&
+                                            remainingTime[tcp.id] !== undefined && (
+                                                <Text style={[
+                                                    styles.timerText,
+                                                    remainingTime[tcp.id] <= 0 ? styles.timerTextOverdue : null
+                                                ]}>
+                                                    Temps restant: {formatTime(remainingTime[tcp.id])}
+                                                </Text>
+                                            )}
                                     </View>
                                 </TouchableOpacity>
                             ))}
@@ -171,6 +203,9 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         borderRadius: 16,
         padding: width * 0.04,
+    },
+    productItemDisabled: {
+        opacity: 0.7,
     },
     productName: {
         fontWeight: '700',
