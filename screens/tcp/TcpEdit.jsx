@@ -6,7 +6,9 @@ import {
     View,
     ScrollView,
     Alert,
-    Dimensions
+    Dimensions,
+    KeyboardAvoidingView,
+    Platform
 } from "react-native";
 import { AntDesign, FontAwesome } from "@expo/vector-icons";
 import { CheckBox } from "@rneui/base";
@@ -116,7 +118,7 @@ const TcpEdit = ({ route, navigation }) => {
                 reverseCounterButtons
                 style={[
                     styles.tempControl,
-                    isInvalidTemperature && styles.tempControlRed
+                    isInvalidTemperature && styles.tempControlError
                 ]}
             />
         );
@@ -236,89 +238,100 @@ const TcpEdit = ({ route, navigation }) => {
 
     return (
         <SafeAreaView style={styles.container}>
-            <ScrollView contentContainerStyle={styles.scrollContent}>
-                <View style={styles.headerContainer}>
-                    <Text style={styles.headerText}>{operationType}</Text>
-                </View>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                style={styles.keyboardAvoidingView}
+                keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+            >
+                <ScrollView
+                    contentContainerStyle={styles.scrollContent}
+                    keyboardShouldPersistTaps="handled"
+                >
+                    <View style={styles.headerContainer}>
+                        <Text style={styles.headerText}>{operationType}</Text>
+                    </View>
 
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Produits sélectionnés</Text>
-                    {selectedProducts.map((product, index) => (
-                        <Text key={`product-${product.productId}-${index}`} style={styles.productItem}>
-                            {product.productName}
-                        </Text>
-                    ))}
-                </View>
-
-                <View style={styles.section}>
-                    <DateTimeField
-                        title="Date et heure de début"
-                        onChange={handleStartDateTimeChange}
-                        initialValue={startDateTime}
-                    />
-                </View>
-
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Température de début</Text>
-                    {startTemp !== null && renderTempControl(startTemp, setStartTemp, false)}
-                </View>
-
-                <View key="end-process-checkbox">
-                    {renderCheckbox({
-                        title: "Renseigner la fin du processus maintenant",
-                        checked: showEndProcess,
-                        onPress: () => setShowEndProcess(!showEndProcess)
-                    })}
-                </View>
-
-                {showEndProcess && (
-                    <>
-                        <View style={styles.section}>
-                            <DateTimeField
-                                title="Date et heure de fin"
-                                onChange={handleEndDateTimeChange}
-                                initialValue={endDateTime}
-                            />
-                        </View>
-
-                        <View style={styles.section}>
-                            <Text style={styles.sectionTitle}>Température de fin</Text>
-                            {endTemp !== null && renderTempControl(endTemp, setEndTemp, true)}
-                        </View>
-                    </>
-                )}
-
-                {!showEndProcess && (
                     <View style={styles.section}>
-                        <Text style={styles.actionTitle}>Actions correctives</Text>
-                        {CORRECTIVE_ACTIONS.map((action, index) => (
-                            <View key={`action-${index}`}>
-                                {renderCheckbox({
-                                    title: action,
-                                    checked: selectedAction === index,
-                                    onPress: () => setSelectedAction(index),
-                                    containerStyle: styles.actionCheckbox
-                                })}
-                            </View>
+                        <Text style={styles.sectionTitle}>Produits sélectionnés</Text>
+                        {selectedProducts.map((product, index) => (
+                            <Text key={`product-${product.productId}-${index}`} style={styles.productItem}>
+                                {product.productName}
+                            </Text>
                         ))}
                     </View>
-                )}
 
-                {additionalInfo && (
                     <View style={styles.section}>
-                        <Text style={styles.sectionTitle}>Informations complémentaires</Text>
-                        <Text style={styles.additionalInfo}>{additionalInfo}</Text>
+                        <DateTimeField
+                            title="Date et heure de début"
+                            onChange={handleStartDateTimeChange}
+                            initialValue={startDateTime}
+                        />
                     </View>
-                )}
-            </ScrollView>
 
-            <View style={styles.buttonContainer}>
-                <CustomButton
-                    title="Mettre à jour"
-                    handlePress={handleSubmit}
-                    isLoading={isLoading}
-                />
-            </View>
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Température de début</Text>
+                        {startTemp !== null && renderTempControl(startTemp, setStartTemp, false)}
+                    </View>
+
+                    <View key="end-process-checkbox">
+                        {renderCheckbox({
+                            title: "Renseigner la fin du processus maintenant",
+                            checked: showEndProcess,
+                            onPress: () => setShowEndProcess(!showEndProcess)
+                        })}
+                    </View>
+
+                    {showEndProcess && (
+                        <>
+                            <View style={styles.section}>
+                                <DateTimeField
+                                    title="Date et heure de fin"
+                                    onChange={handleEndDateTimeChange}
+                                    initialValue={endDateTime}
+                                />
+                            </View>
+
+                            <View style={styles.section}>
+                                <Text style={styles.sectionTitle}>Température de fin</Text>
+                                {endTemp !== null && renderTempControl(endTemp, setEndTemp, true)}
+                            </View>
+                        </>
+                    )}
+
+                    {!showEndProcess && (
+                        <View style={styles.section}>
+                            <Text style={styles.actionTitle}>Actions correctives</Text>
+                            {CORRECTIVE_ACTIONS.map((action, index) => (
+                                <View key={`action-${index}`}>
+                                    {renderCheckbox({
+                                        title: action,
+                                        checked: selectedAction === index,
+                                        onPress: () => setSelectedAction(index),
+                                        containerStyle: styles.actionCheckbox
+                                    })}
+                                </View>
+                            ))}
+                        </View>
+                    )}
+
+                    {additionalInfo && (
+                        <View style={styles.section}>
+                            <Text style={styles.sectionTitle}>Informations complémentaires</Text>
+                            <Text style={styles.additionalInfo}>{additionalInfo}</Text>
+                        </View>
+                    )}
+
+                    <View style={styles.buttonSpacing} />
+                </ScrollView>
+
+                <View style={styles.buttonContainer}>
+                    <CustomButton
+                        title="Mettre à jour"
+                        handlePress={handleSubmit}
+                        isLoading={isLoading}
+                    />
+                </View>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 };
@@ -327,6 +340,9 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: COLORS.white,
+    },
+    keyboardAvoidingView: {
+        flex: 1,
     },
     scrollContent: {
         flexGrow: 1,
@@ -377,7 +393,11 @@ const styles = StyleSheet.create({
     },
     buttonContainer: {
         padding: SPACING.padding,
-        paddingBottom: height * 0.05,
+        paddingBottom: Platform.OS === 'ios' ? height * 0.05 : height * 0.03,
+        backgroundColor: COLORS.white,
+    },
+    buttonSpacing: {
+        height: height * 0.1,
     },
     additionalInfo: {
         fontSize: FONT_SIZES.normal,
