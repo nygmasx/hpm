@@ -9,7 +9,9 @@ import {
     KeyboardAvoidingView,
     Dimensions,
     Platform,
-    TouchableOpacity, Alert
+    TouchableOpacity,
+    Alert,
+    Image
 } from "react-native";
 import FormField from "../../components/FormField";
 import DateTimeField from "../../components/DateTimeField";
@@ -27,7 +29,6 @@ import * as FileSystem from "expo-file-system";
 const { width, height } = Dimensions.get('window');
 
 const NouvelleReception = ({ navigation }) => {
-
     const [formData, setFormData] = useState({
         reference: '',
         deliveryDate: '',
@@ -35,11 +36,12 @@ const NouvelleReception = ({ navigation }) => {
         selectedService: null,
         additionalInfo: '',
     });
+    const [image, setImage] = useState(null);
+    const [imageInfo, setImageInfo] = useState(null);
     const [suppliers, setSuppliers] = useState([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isSupplierModalVisible, setIsSupplierModalVisible] = useState(false);
     const [supplierName, setSupplierName] = useState('');
-    const [image, setImage] = useState()
     const { user, token } = useContext(AuthContext);
 
     const serviceOptions = useMemo(() => ['Matin', 'Midi', 'Soir', 'Indifférent'], []);
@@ -94,31 +96,33 @@ const NouvelleReception = ({ navigation }) => {
     ), [serviceOptions, formData.selectedService, handleInputChange]);
 
     const handleSubmit = useCallback(() => {
-        if (!formData.reference || !formData.deliveryDate || !formData.selectedSupplier || !formData.selectedService) {
+        if ((!formData.reference && !image) || !formData.deliveryDate || !formData.selectedSupplier || !formData.selectedService) {
             Toast.show({
                 type: 'error',
                 text1: 'Veuillez remplir tous les champs obligatoires',
+                text2: 'Une référence ou une photo est requise',
             });
         } else {
             navigation.navigate('Reception Produit', {
                 formData: {
                     ...formData,
-                    deliveryDate: formData.deliveryDate
+                    deliveryDate: formData.deliveryDate,
+                    referencePicture: image
                 }
             });
         }
-    }, [formData, navigation]);
+    }, [formData, navigation, image]);
 
     const sendSupplierData = async () => {
-        setIsLoading(true)
+        setIsLoading(true);
         const formData = new FormData();
-        formData.append('name', supplierName)
+        formData.append('name', supplierName);
 
         try {
             axiosConfig.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
             await axiosConfig.post('/supplier/new', formData);
-            await fetchUserSuppliers()
-            setIsSupplierModalVisible(!isSupplierModalVisible)
+            await fetchUserSuppliers();
+            setIsSupplierModalVisible(!isSupplierModalVisible);
             Toast.show({
                 type: 'success',
                 text1: 'Fournisseur ajouté 🟢',
@@ -128,11 +132,11 @@ const NouvelleReception = ({ navigation }) => {
         } finally {
             setIsLoading(false);
         }
-    }
+    };
 
     const toggleModal = () => {
-        setIsSupplierModalVisible(!isSupplierModalVisible)
-    }
+        setIsSupplierModalVisible(!isSupplierModalVisible);
+    };
 
     const takePhoto = async () => {
         const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
@@ -149,8 +153,57 @@ const NouvelleReception = ({ navigation }) => {
         });
 
         if (!result.canceled) {
-            setImage(result.assets[0].uri);
+            const uri = result.assets[0].uri;
+            const fileInfo = await FileSystem.getInfoAsync(uri);
+            setImage(uri);
+            setImageInfo({
+                size: (fileInfo.size / 1024 / 1024).toFixed(2), // Convert to MB
+                fileName: uri.split('/').pop(),
+                dateCapture: new Date().toLocaleString()
+            });
+            // Reset reference when image is captured
+            handleInputChange('reference', '');
         }
+    };
+
+    const removeImage = () => {
+        setImage(null);
+        setImageInfo(null);
+    };
+
+    const renderReferenceInput = () => {
+        if (image) {
+            return (
+                <View style={styles.imageCard}>
+                    <Image source={{ uri: image }} style={styles.capturedImage} />
+                    <View style={styles.imageInfo}>
+                        <Text style={styles.imageInfoText}>Nom: {imageInfo?.fileName}</Text>
+                        <Text style={styles.imageInfoText}>Taille: {imageInfo?.size} MB</Text>
+                        <Text style={styles.imageInfoText}>Date: {imageInfo?.dateCapture}</Text>
+                    </View>
+                    <TouchableOpacity style={styles.removeImageButton} onPress={removeImage}>
+                        <FontAwesome name="trash" size={20} color="white" />
+                    </TouchableOpacity>
+                </View>
+            );
+        }
+
+        return (
+            <View style={styles.referenceInputContainer}>
+                <View style={styles.referenceInput}>
+                    <TextInput
+                        style={styles.input}
+                        placeholderTextColor="#7b7b8b"
+                        value={formData.reference}
+                        onChangeText={(text) => handleInputChange('reference', text)}
+                        placeholder="Saisir une référence"
+                    />
+                </View>
+                <TouchableOpacity style={styles.cameraButton} onPress={takePhoto}>
+                    <FontAwesome name="camera" size={20} color="white" />
+                </TouchableOpacity>
+            </View>
+        );
     };
 
     return (
@@ -183,19 +236,7 @@ const NouvelleReception = ({ navigation }) => {
                         <View style={styles.referenceContainer}>
                             <View style={styles.referenceContent}>
                                 <Text style={styles.sectionTitle}>Référence Bon de Livraison / Facture</Text>
-                                <View style={styles.referenceInputContainer}>
-                                    <View style={styles.referenceInput}>
-                                        <TextInput
-                                            style={styles.input}
-                                            placeholderTextColor="#7b7b8b"
-                                            value={formData.reference}
-                                            onChangeText={(text) => handleInputChange('reference', text)}
-                                        />
-                                    </View>
-                                    <TouchableOpacity style={styles.cameraButton} onPress={() => takePhoto()}>
-                                        <FontAwesome name="camera" size={20} color="white" />
-                                    </TouchableOpacity>
-                                </View>
+                                {renderReferenceInput()}
                             </View>
                         </View>
                         <View style={styles.dateContainer}>
@@ -406,6 +447,37 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: width * 0.04,
         fontWeight: '600',
+    },
+    imageCard: {
+        borderWidth: 1,
+        borderColor: '#C5C6CC',
+        borderRadius: 12,
+        padding: width * 0.03,
+        marginTop: height * 0.01,
+    },
+    capturedImage: {
+        width: '100%',
+        height: height * 0.2,
+        borderRadius: 8,
+        marginBottom: height * 0.01,
+        resizeMode: 'cover',
+    },
+    imageInfo: {
+        marginTop: height * 0.01,
+    },
+    imageInfoText: {
+        fontSize: width * 0.035,
+        color: '#666',
+        marginBottom: 4,
+    },
+    removeImageButton: {
+        position: 'absolute',
+        top: width * 0.03,
+        right: width * 0.03,
+        backgroundColor: '#FF4444',
+        borderRadius: 20,
+        padding: 8,
+        zIndex: 1,
     },
 });
 

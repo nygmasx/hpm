@@ -106,6 +106,14 @@ const ReceptionFinal = ({ navigation, route }) => {
             });
         }
 
+        if (lastForm.referencePicture) {
+            formData.append('reference_picture', {
+                uri: lastForm.referencePicture,
+                type: 'image/jpeg',
+                name: 'reference_picture.jpg'
+            });
+        }
+
         try {
             axiosConfig.defaults.headers.common['Authorization'] = `Bearer ${user.token}`;
             const response = await axiosConfig.post('/reception/new', formData);

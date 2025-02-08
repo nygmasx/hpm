@@ -88,6 +88,16 @@ const HistoriqueReception = () => {
                 <Text style={styles.headerDate}>{formatDate(reception.date)}</Text>
             </View>
 
+            {reception.reference_picture && (
+                <View style={styles.imageContainer}>
+                    <Text style={styles.imageTitle}>Photo de référence:</Text>
+                    <Image
+                        source={{ uri: `https://apimobile.testingtest.fr/storage/${reception.reference_picture}` }}
+                        style={styles.referenceImage}
+                    />
+                </View>
+            )}
+
             <View style={styles.receptionContent}>
                 <DetailItem label="Service" value={reception.service} />
                 <DetailItem
@@ -258,13 +268,20 @@ const styles = StyleSheet.create({
         flex: 1,
     },
     imageContainer: {
-        marginTop: 10,
+        marginVertical: 10,
+        paddingHorizontal: 12,
     },
     imageTitle: {
         fontSize: 14,
         fontWeight: '600',
         color: '#495057',
         marginBottom: 5,
+    },
+    referenceImage: {
+        width: '100%',
+        height: 200,
+        resizeMode: 'cover',
+        borderRadius: 8,
     },
     nonComplianceImage: {
         width: '100%',
